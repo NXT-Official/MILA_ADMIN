@@ -18,6 +18,7 @@ export const ANALYTICS_BROWSABLE_TABLES = [
   "concierge_messages",
   "staff_audit_log",
   "rate_limit_buckets",
+  "ai_spend_log",
 ] as const satisfies readonly (keyof Database["public"]["Tables"])[];
 export type BrowsableTable = (typeof ANALYTICS_BROWSABLE_TABLES)[number];
 
@@ -34,6 +35,7 @@ const ORDER_COLUMN: Record<BrowsableTable, string> = {
   concierge_messages: "created_at",
   staff_audit_log: "created_at",
   rate_limit_buckets: "window_start",
+  ai_spend_log: "created_at",
 };
 
 export interface AdminAnalyticsSummary {
@@ -50,6 +52,9 @@ export interface AdminAnalyticsSummary {
   totalBrands: number;
   totalPostItems: number;
   activeRateLimitBuckets: number;
+  totalAiCalls: number;
+  totalAiSpendUsd: number;
+  totalAiTokens: number;
 }
 
 export const adminAnalyticsSummary = createServerFn({ method: "GET" })
@@ -69,6 +74,7 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       brandsCount,
       postItemsCount,
       rateLimitCount,
+      aiSpendRes,
     ] = await Promise.all([
       supabaseAdmin
         .from("subscriptions")
@@ -83,6 +89,7 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       supabaseAdmin.from("brands").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("post_items").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("rate_limit_buckets").select("*", { count: "exact", head: true }),
+      supabaseAdmin.from("ai_spend_log").select("cost_usd,total_tokens", { count: "exact" }),
     ]);
 
     const planIds = [...new Set((activeSubs.data ?? []).map((s) => s.plan_id))];
@@ -121,6 +128,9 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       totalBrands: brandsCount.count ?? 0,
       totalPostItems: postItemsCount.count ?? 0,
       activeRateLimitBuckets: rateLimitCount.count ?? 0,
+      totalAiCalls: aiSpendRes.count ?? 0,
+      totalAiSpendUsd: (aiSpendRes.data ?? []).reduce((sum, r) => sum + (r.cost_usd ?? 0), 0),
+      totalAiTokens: (aiSpendRes.data ?? []).reduce((sum, r) => sum + (r.total_tokens ?? 0), 0),
     };
   });
 

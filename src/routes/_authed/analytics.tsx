@@ -11,6 +11,8 @@ import {
   Tag,
   ListTree,
   Gauge,
+  Cpu,
+  Coins,
   Loader2,
 } from "lucide-react";
 import { adminAnalyticsQueryOptions } from "@/lib/queries/admin";
@@ -18,6 +20,18 @@ import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { AnalyticsTableBrowser } from "@/components/admin/analytics-table-browser";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 import { formatPrice } from "@/lib/utils";
+
+// AI spend accrues in fractions of a cent per call — formatPrice's
+// whole-dollar rounding would show "$0" for a long time, which is
+// inaccurate, not just imprecise.
+function formatAiSpend(usd: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(usd);
+}
 
 export const Route = createFileRoute("/_authed/analytics")({
   beforeLoad: ({ context }) => requireStaffRoutePermission(context.queryClient, "analytics.view"),
@@ -90,6 +104,18 @@ function AdminAnalytics() {
           label="Active Rate-Limit Buckets"
           value={stats?.activeRateLimitBuckets ?? 0}
           sublabel="Operational signal, not a business metric"
+        />
+        <AdminStatCard
+          icon={Coins}
+          label="Total AI Spend"
+          value={formatAiSpend(stats?.totalAiSpendUsd ?? 0)}
+          sublabel={`${stats?.totalAiCalls ?? 0} calls logged`}
+        />
+        <AdminStatCard
+          icon={Cpu}
+          label="Total AI Tokens"
+          value={stats?.totalAiTokens ?? 0}
+          sublabel="Gemini calls report tokens, no cost (model-dependent pricing)"
         />
       </div>
 

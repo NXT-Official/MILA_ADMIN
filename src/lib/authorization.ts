@@ -41,6 +41,9 @@ export const STAFF_ROUTE_PERMISSIONS = {
   "/subscription-plans": "subscriptionPlans.manage",
   "/moderation": "moderation.view",
   "/support": "support.view",
+  // Every staff member can manage their own password — this is the suite's
+  // base floor permission, not an admin-only one.
+  "/settings": "admin.access",
 } as const satisfies Record<string, AppPermission>;
 
 export type StaffRoute = keyof typeof STAFF_ROUTE_PERMISSIONS;

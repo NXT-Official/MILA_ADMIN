@@ -23,6 +23,7 @@ test("every staff screen re-checks its own permission in its route file", () => 
     "/subscription-plans": "subscription-plans.tsx",
     "/moderation": "moderation.tsx",
     "/support": "support.tsx",
+    "/settings": "settings.tsx",
   };
   for (const route of STAFF_ROUTES) {
     const file = source(`../routes/_authed/${routes[route]}`);

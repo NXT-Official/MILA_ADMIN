@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ShieldCheck } from "lucide-react";
 import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,12 @@ function StaffLoginPage() {
             showPassword={showPassword}
             onToggleShowPassword={() => setShowPassword((v) => !v)}
           />
+          <Link
+            to="/forgot-password"
+            className="mt-3 block text-center text-xs text-muted-foreground hover:text-foreground"
+          >
+            Forgot password?
+          </Link>
         </CardContent>
         <div className="px-6 pb-5 -mt-1">
           <div className="flex items-center gap-1.5 text-micro text-muted-foreground/80 justify-center">

@@ -9,6 +9,7 @@ import {
   CreditCard,
   LogOut,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -94,6 +95,20 @@ export function StaffSidebar({
             </div>
           </div>
         </div>
+        <Link
+          to="/settings"
+          onClick={() => onNavigate?.()}
+          aria-current={path === "/settings" ? "page" : undefined}
+          className={cn(
+            "mt-2 flex items-center gap-2.5 rounded-full px-4 py-2.5 text-xs uppercase tracking-label-wide transition-colors",
+            path === "/settings"
+              ? "bg-ink text-background"
+              : "text-stone hover:text-ink hover:bg-background/60",
+          )}
+        >
+          <Settings className="size-4.5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
+          Settings
+        </Link>
         <button
           type="button"
           onClick={handleSignOut}

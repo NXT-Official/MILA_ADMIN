@@ -9,15 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedSupportRouteImport } from './routes/_authed/support'
 import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/subscription-plans'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
 
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -35,6 +48,11 @@ const AuthedSupportRoute = AuthedSupportRouteImport.update({
 const AuthedSubscriptionPlansRoute = AuthedSubscriptionPlansRouteImport.update({
   id: '/subscription-plans',
   path: '/subscription-plans',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedModerationRoute = AuthedModerationRouteImport.update({
@@ -60,19 +78,25 @@ const AuthedAnalyticsRoute = AuthedAnalyticsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
+  '/settings': typeof AuthedSettingsRoute
   '/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/support': typeof AuthedSupportRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
+  '/settings': typeof AuthedSettingsRoute
   '/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/support': typeof AuthedSupportRoute
 }
@@ -80,10 +104,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/forgot-password': typeof ForgotPasswordRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/_authed/analytics': typeof AuthedAnalyticsRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/moderation': typeof AuthedModerationRoute
+  '/_authed/settings': typeof AuthedSettingsRoute
   '/_authed/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/_authed/support': typeof AuthedSupportRoute
 }
@@ -91,29 +118,38 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forgot-password'
+    | '/reset-password'
     | '/analytics'
     | '/dashboard'
     | '/members'
     | '/moderation'
+    | '/settings'
     | '/subscription-plans'
     | '/support'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forgot-password'
+    | '/reset-password'
     | '/analytics'
     | '/dashboard'
     | '/members'
     | '/moderation'
+    | '/settings'
     | '/subscription-plans'
     | '/support'
   id:
     | '__root__'
     | '/'
     | '/_authed'
+    | '/forgot-password'
+    | '/reset-password'
     | '/_authed/analytics'
     | '/_authed/dashboard'
     | '/_authed/members'
     | '/_authed/moderation'
+    | '/_authed/settings'
     | '/_authed/subscription-plans'
     | '/_authed/support'
   fileRoutesById: FileRoutesById
@@ -121,10 +157,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -151,6 +203,13 @@ declare module '@tanstack/react-router' {
       path: '/subscription-plans'
       fullPath: '/subscription-plans'
       preLoaderRoute: typeof AuthedSubscriptionPlansRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/moderation': {
@@ -189,6 +248,7 @@ interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedModerationRoute: typeof AuthedModerationRoute
+  AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedSubscriptionPlansRoute: typeof AuthedSubscriptionPlansRoute
   AuthedSupportRoute: typeof AuthedSupportRoute
 }
@@ -198,6 +258,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedModerationRoute: AuthedModerationRoute,
+  AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedSubscriptionPlansRoute: AuthedSubscriptionPlansRoute,
   AuthedSupportRoute: AuthedSupportRoute,
 }
@@ -208,6 +269,8 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
+  ForgotPasswordRoute: ForgotPasswordRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

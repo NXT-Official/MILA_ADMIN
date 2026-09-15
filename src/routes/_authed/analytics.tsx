@@ -10,7 +10,6 @@ import {
   ShoppingBag,
   Tag,
   ListTree,
-  Megaphone,
   Gauge,
   Loader2,
 } from "lucide-react";
@@ -85,12 +84,6 @@ function AdminAnalytics() {
           icon={ListTree}
           label="Tagged Post Items"
           value={stats?.totalPostItems ?? 0}
-        />
-        <AdminStatCard
-          icon={Megaphone}
-          label="Ad Events"
-          value={stats?.totalAdEvents ?? 0}
-          sublabel="Schema exists; no ad SDK is wired up yet"
         />
         <AdminStatCard
           icon={Gauge}

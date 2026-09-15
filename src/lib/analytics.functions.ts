@@ -16,7 +16,6 @@ export const ANALYTICS_BROWSABLE_TABLES = [
   "saved_palettes",
   "concierge_conversations",
   "concierge_messages",
-  "ad_events",
   "staff_audit_log",
   "rate_limit_buckets",
 ] as const satisfies readonly (keyof Database["public"]["Tables"])[];
@@ -33,7 +32,6 @@ const ORDER_COLUMN: Record<BrowsableTable, string> = {
   saved_palettes: "created_at",
   concierge_conversations: "created_at",
   concierge_messages: "created_at",
-  ad_events: "created_at",
   staff_audit_log: "created_at",
   rate_limit_buckets: "window_start",
 };
@@ -51,7 +49,6 @@ export interface AdminAnalyticsSummary {
   totalProducts: number;
   totalBrands: number;
   totalPostItems: number;
-  totalAdEvents: number;
   activeRateLimitBuckets: number;
 }
 
@@ -71,7 +68,6 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       productsCount,
       brandsCount,
       postItemsCount,
-      adEventsCount,
       rateLimitCount,
     ] = await Promise.all([
       supabaseAdmin
@@ -86,7 +82,6 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       supabaseAdmin.from("products").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("brands").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("post_items").select("*", { count: "exact", head: true }),
-      supabaseAdmin.from("ad_events").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("rate_limit_buckets").select("*", { count: "exact", head: true }),
     ]);
 
@@ -125,7 +120,6 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       totalProducts: productsCount.count ?? 0,
       totalBrands: brandsCount.count ?? 0,
       totalPostItems: postItemsCount.count ?? 0,
-      totalAdEvents: adEventsCount.count ?? 0,
       activeRateLimitBuckets: rateLimitCount.count ?? 0,
     };
   });

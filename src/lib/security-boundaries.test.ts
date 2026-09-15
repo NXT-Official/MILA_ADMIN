@@ -18,6 +18,7 @@ test("every staff screen re-checks its own permission in its route file", () => 
   // could deep-link straight into the admin-only screens.
   const routes: Record<(typeof STAFF_ROUTES)[number], string> = {
     "/dashboard": "dashboard.tsx",
+    "/analytics": "analytics.tsx",
     "/members": "members.tsx",
     "/subscription-plans": "subscription-plans.tsx",
     "/moderation": "moderation.tsx",

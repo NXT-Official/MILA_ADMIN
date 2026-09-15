@@ -16,6 +16,7 @@ import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/su
 import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -51,9 +52,15 @@ const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAnalyticsRoute = AuthedAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
@@ -72,6 +80,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/_authed/analytics': typeof AuthedAnalyticsRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/moderation': typeof AuthedModerationRoute
@@ -82,6 +91,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analytics'
     | '/dashboard'
     | '/members'
     | '/moderation'
@@ -90,6 +100,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analytics'
     | '/dashboard'
     | '/members'
     | '/moderation'
@@ -99,6 +110,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/_authed/analytics'
     | '/_authed/dashboard'
     | '/_authed/members'
     | '/_authed/moderation'
@@ -162,10 +174,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/analytics': {
+      id: '/_authed/analytics'
+      path: '/analytics'
+      fullPath: '/analytics'
+      preLoaderRoute: typeof AuthedAnalyticsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
+  AuthedAnalyticsRoute: typeof AuthedAnalyticsRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedModerationRoute: typeof AuthedModerationRoute
@@ -174,6 +194,7 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAnalyticsRoute: AuthedAnalyticsRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedModerationRoute: AuthedModerationRoute,

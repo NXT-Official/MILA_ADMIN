@@ -16,7 +16,7 @@ test("each role lands on the first screen its permissions open", () => {
 });
 
 test("a moderator is shut out of every admin-only screen", () => {
-  const adminOnly = ["/dashboard", "/members", "/subscription-plans"] as const;
+  const adminOnly = ["/dashboard", "/analytics", "/members", "/subscription-plans"] as const;
   for (const route of adminOnly) {
     expect(hasPermission(["moderator"], STAFF_ROUTE_PERMISSIONS[route])).toBe(false);
     expect(hasPermission(["admin"], STAFF_ROUTE_PERMISSIONS[route])).toBe(true);

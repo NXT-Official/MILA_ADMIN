@@ -4,6 +4,7 @@ export type AppRole = (typeof APP_ROLES)[number];
 export const APP_PERMISSIONS = [
   "admin.access",
   "admin.dashboard.view",
+  "analytics.view",
   "members.view",
   "members.manage",
   "members.suspend",
@@ -35,6 +36,7 @@ export const ROLE_PERMISSIONS = {
  */
 export const STAFF_ROUTE_PERMISSIONS = {
   "/dashboard": "admin.dashboard.view",
+  "/analytics": "analytics.view",
   "/members": "members.view",
   "/subscription-plans": "subscriptionPlans.manage",
   "/moderation": "moderation.view",

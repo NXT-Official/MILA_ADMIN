@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
+  BarChart3,
   Users,
   ShieldAlert,
   LifeBuoy,
@@ -27,6 +28,7 @@ interface StaffNavItem {
 
 const STAFF_LINKS: StaffNavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/members", label: "Members", icon: Users },
   { to: "/subscription-plans", label: "Plans", icon: CreditCard },
   { to: "/moderation", label: "Moderation", icon: ShieldAlert },

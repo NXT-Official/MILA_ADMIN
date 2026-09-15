@@ -6,4 +6,7 @@ export const queryKeys = {
   adminSupportMessages: ["admin:support-messages"] as const,
   adminDashboard: ["admin:dashboard"] as const,
   adminSubscriptionPlans: ["admin:subscription-plans"] as const,
+  adminAnalytics: ["admin:analytics"] as const,
+  adminAnalyticsTable: (table: string, page: number) =>
+    ["admin:analytics-table", table, page] as const,
 };

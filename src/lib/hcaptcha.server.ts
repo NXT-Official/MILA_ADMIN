@@ -1,3 +1,5 @@
+import { captureServerException } from "./sentry.server";
+
 const VERIFY_URL = "https://hcaptcha.com/siteverify";
 const VERIFY_TIMEOUT_MS = 8_000;
 
@@ -22,7 +24,8 @@ export async function verifyHcaptcha(token: string | undefined | null, remoteIp?
       body,
       signal: AbortSignal.timeout(VERIFY_TIMEOUT_MS),
     });
-  } catch {
+  } catch (err) {
+    captureServerException(err);
     throw new Error("Captcha verification failed. Please try again.");
   }
 

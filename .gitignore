@@ -35,3 +35,5 @@ supabase/.temp/
 # Generated files
 *.txt
 !IN_DEVELOPMENT.txt
+.vercel
+.env*.local

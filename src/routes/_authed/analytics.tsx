@@ -14,6 +14,9 @@ import {
   Cpu,
   Coins,
   Loader2,
+  Activity,
+  Smartphone,
+  TrendingUp,
 } from "lucide-react";
 import { adminAnalyticsQueryOptions } from "@/lib/queries/admin";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
@@ -116,6 +119,28 @@ function AdminAnalytics() {
           label="Total AI Tokens"
           value={stats?.totalAiTokens ?? 0}
           sublabel="Gemini calls report tokens, no cost (model-dependent pricing)"
+        />
+        <AdminStatCard
+          icon={Activity}
+          label="Product Events (30d)"
+          value={stats?.totalAnalyticsEventsLast30d ?? 0}
+          sublabel="signup, onboarding, look-generated, purchase-started"
+        />
+        <AdminStatCard
+          icon={Smartphone}
+          label="Web vs Mobile Events (30d)"
+          value={`${stats?.analyticsEventsBySource.web ?? 0} / ${stats?.analyticsEventsBySource.mobile ?? 0}`}
+          sublabel="web / mobile"
+        />
+        <AdminStatCard
+          icon={TrendingUp}
+          label="Top Event (30d)"
+          value={stats?.topAnalyticsEvents[0]?.eventName ?? "—"}
+          sublabel={
+            stats?.topAnalyticsEvents[0]
+              ? `${stats.topAnalyticsEvents[0].count} occurrences`
+              : "No events yet"
+          }
         />
       </div>
 

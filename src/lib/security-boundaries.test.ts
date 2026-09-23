@@ -56,10 +56,15 @@ test("browser Supabase client never imports or reads the service-role credential
   expect(client).toContain("VITE_SUPABASE_PUBLISHABLE_KEY");
 });
 
-test("password auth stays server-side and delegates abuse limits to Supabase Auth", () => {
+test("password auth stays server-side, rate-limited per ip+email, and never touches the service-role key", () => {
+  // Captcha covers the honest-mistake case; this covers distributed/automated
+  // credential-stuffing against staff accounts, which is a higher-value
+  // target than member accounts and deserves its own limiter rather than
+  // relying on Supabase Auth's own defaults alone.
   const auth = source("./auth-handler.server.ts");
   expect(auth).toContain("signInWithPassword");
-  expect(auth).not.toContain("consumeRateLimit");
+  expect(auth).toContain("consumeRateLimit");
+  expect(auth).toContain("admin_login:");
   expect(auth).not.toContain("SUPABASE_SERVICE_ROLE_KEY");
 });
 

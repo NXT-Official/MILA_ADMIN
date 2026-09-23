@@ -1,19 +1,29 @@
 import { createClient, type Session } from "@supabase/supabase-js";
-import { getRequestUrl } from "@tanstack/react-start/server";
+import { getRequestIP, getRequestUrl } from "@tanstack/react-start/server";
 import type { Database } from "@/integrations/supabase/types";
 import { requireEnv } from "./env";
+import { consumeRateLimit, RateLimitExceededError, type RateLimitStore } from "./rate-limit.server";
+import { captureServerException } from "./sentry.server";
 import {
   Credentials,
-  Signup,
   RequestReset,
   NewPassword,
   type CredentialsInput,
-  type SignupInput,
   type RequestResetInput,
   type NewPasswordInput,
 } from "./auth-input";
 
-type AuthOperation = "login" | "signup";
+// Staff credentials are a privileged access surface — brute-forcing one
+// account should be materially harder than exhausting a single IP's budget,
+// so login is limited on the (ip, email) pair rather than either alone. A
+// captcha already covers the honest-mistake case; this covers the
+// distributed/automated one where a per-request captcha token is present but
+// automatically solved or replayed.
+const LOGIN_RATE_LIMIT_POLICY = { limit: 10, windowSeconds: 15 * 60 };
+
+function requestIp(): string {
+  return getRequestIP({ xForwardedFor: true }) ?? "unknown";
+}
 
 function authClient() {
   const env = requireEnv({
@@ -32,51 +42,45 @@ function requestOrigin(): string {
 export type AuthDependencies = {
   client: typeof authClient;
   origin: typeof requestOrigin;
+  ip: typeof requestIp;
+  rateLimitStore?: RateLimitStore;
 };
 
 const defaults: AuthDependencies = {
   client: authClient,
   origin: requestOrigin,
+  ip: requestIp,
 };
 
 export async function authenticateWithPassword(
-  operation: "login",
   data: CredentialsInput,
-  deps?: AuthDependencies,
-): Promise<{ session: Session | null }>;
-export async function authenticateWithPassword(
-  operation: "signup",
-  data: SignupInput,
-  deps?: AuthDependencies,
-): Promise<{ session: Session | null }>;
-export async function authenticateWithPassword(
-  operation: AuthOperation,
-  input: CredentialsInput | SignupInput,
   deps = defaults,
-) {
-  const data = operation === "login" ? Credentials.parse(input) : Signup.parse(input);
-  const auth = deps.client().auth;
-  const result =
-    operation === "login"
-      ? await auth.signInWithPassword({
-          email: data.email,
-          password: data.password,
-          options: { captchaToken: data.captchaToken },
-        })
-      : await auth.signUp({
-          email: data.email,
-          password: data.password,
-          options: {
-            data: { username: (data as SignupInput).username },
-            captchaToken: data.captchaToken,
-          },
-        });
-  if (result.error) {
-    if (operation === "login") {
-      console.warn(JSON.stringify({ event: "authentication_failure", method: "password" }));
-      throw new Error("Email, password, or verification challenge is invalid.");
+): Promise<{ session: Session | null }> {
+  const parsed = Credentials.parse(data);
+
+  try {
+    await consumeRateLimit(
+      `admin_login:${deps.ip()}:${parsed.email.toLowerCase()}`,
+      LOGIN_RATE_LIMIT_POLICY,
+      deps.rateLimitStore,
+    );
+  } catch (err) {
+    if (err instanceof RateLimitExceededError) {
+      throw new Error("Too many sign-in attempts. Please try again later.");
     }
-    throw new Error("Unable to create the account. Please try again later.");
+    throw err;
+  }
+
+  const auth = deps.client().auth;
+  const result = await auth.signInWithPassword({
+    email: parsed.email,
+    password: parsed.password,
+    options: { captchaToken: parsed.captchaToken },
+  });
+  if (result.error) {
+    captureServerException(result.error);
+    console.warn(JSON.stringify({ event: "authentication_failure", method: "password" }));
+    throw new Error("Email, password, or verification challenge is invalid.");
   }
   return { session: result.data.session };
 }
@@ -92,6 +96,7 @@ export async function requestPasswordReset(
     captchaToken: data.captchaToken,
   });
   if (error) {
+    captureServerException(error);
     console.warn(JSON.stringify({ event: "password_reset_request_failure" }));
     throw new Error("Unable to send the reset link right now. Please try again later.");
   }
@@ -111,11 +116,13 @@ export async function updatePassword(
     refresh_token: data.refreshToken,
   });
   if (sessionError) {
+    captureServerException(sessionError);
     console.warn(JSON.stringify({ event: "password_reset_session_invalid" }));
     throw new Error("Your reset link has expired. Please request a new one.");
   }
   const { error } = await client.auth.updateUser({ password: data.password });
   if (error) {
+    captureServerException(error);
     console.warn(JSON.stringify({ event: "password_reset_update_failure" }));
     throw new Error("Unable to update your password. Please try again.");
   }

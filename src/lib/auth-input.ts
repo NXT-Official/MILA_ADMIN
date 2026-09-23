@@ -8,14 +8,6 @@ export const Credentials = z
   })
   .strict();
 
-export const Signup = Credentials.extend({
-  username: z
-    .string()
-    .min(3)
-    .max(30)
-    .regex(/^[a-zA-Z0-9_-]+$/),
-}).strict();
-
 export const RequestReset = z
   .object({
     email: z.string().trim().email().max(254),
@@ -32,6 +24,5 @@ export const NewPassword = z
   .strict();
 
 export type CredentialsInput = z.infer<typeof Credentials>;
-export type SignupInput = z.infer<typeof Signup>;
 export type RequestResetInput = z.infer<typeof RequestReset>;
 export type NewPasswordInput = z.infer<typeof NewPassword>;

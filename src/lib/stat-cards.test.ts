@@ -56,11 +56,53 @@ test("cards read their values from the stats they are handed", () => {
     totalPosts: 1,
     hiddenPosts: 4,
     openSupportMessages: 1,
+    totalProducts: 9,
     recentMembers: [],
     recentPosts: [],
   }).find((card) => card.label === "Hidden Posts");
   expect(hiddenPosts?.value).toBe(4);
   expect(hiddenPosts?.to).toBe("/moderation");
+});
+
+test("the catalogue count opens the shop inventory from both screens", () => {
+  const analyticsCatalogue = analyticsCards({
+    activeSubscriptions: 0,
+    mrr: 0,
+    mrrCurrency: "USD",
+    totalRevenueCents: 0,
+    revenueCurrency: "USD",
+    totalOutfits: 0,
+    totalConciergeConversations: 0,
+    totalConciergeMessages: 0,
+    totalSavedPalettes: 0,
+    totalProducts: 50,
+    totalBrands: 9,
+    totalPostItems: 0,
+    activeRateLimitBuckets: 0,
+    totalAiCalls: 0,
+    totalAiSpendUsd: 0,
+    totalAiTokens: 0,
+    totalAnalyticsEventsLast30d: 0,
+    analyticsEventsBySource: {},
+    topAnalyticsEvents: [],
+  }).find((card) => card.label === "Catalog Products");
+  expect(analyticsCatalogue?.value).toBe(50);
+  // The bare table shows rows; the shop screen shows the items and their links.
+  expect(analyticsCatalogue?.to).toBe("/shop");
+
+  const dashboardShop = dashboardCards({
+    totalMembers: 0,
+    totalStewards: 0,
+    aiCreditsAvailable: 0,
+    totalPosts: 0,
+    hiddenPosts: 0,
+    openSupportMessages: 0,
+    totalProducts: 50,
+    recentMembers: [],
+    recentPosts: [],
+  }).find((card) => card.label === "Shop Items");
+  expect(dashboardShop?.value).toBe(50);
+  expect(dashboardShop?.to).toBe("/shop");
 });
 
 test("every browsable table is described and searchable-declared", () => {

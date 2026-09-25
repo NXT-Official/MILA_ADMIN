@@ -494,6 +494,7 @@ export interface AdminDashboardStats {
   totalPosts: number;
   hiddenPosts: number;
   openSupportMessages: number;
+  totalProducts: number;
   recentMembers: {
     id: string;
     full_name: string | null;
@@ -522,6 +523,7 @@ export const adminDashboardStats = createServerFn({ method: "GET" })
       postsCount,
       hiddenPostsCount,
       openSupportCount,
+      productsCount,
       recentMembersRes,
       recentPostsRes,
     ] = await Promise.all([
@@ -537,6 +539,7 @@ export const adminDashboardStats = createServerFn({ method: "GET" })
         .from("support_messages")
         .select("*", { count: "exact", head: true })
         .eq("resolved", false),
+      supabaseAdmin.from("products").select("*", { count: "exact", head: true }),
       supabaseAdmin
         .from("profiles")
         .select("id,full_name,username,created_at")
@@ -572,6 +575,7 @@ export const adminDashboardStats = createServerFn({ method: "GET" })
       totalPosts: postsCount.count ?? 0,
       hiddenPosts: hiddenPostsCount.count ?? 0,
       openSupportMessages: openSupportCount.count ?? 0,
+      totalProducts: productsCount.count ?? 0,
       recentMembers: (recentMembersRes.data ?? []) as AdminDashboardStats["recentMembers"],
       recentPosts: (recentPostsRes.data ?? []).map((post) => ({
         id: post.id,

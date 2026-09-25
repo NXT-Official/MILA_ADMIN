@@ -108,8 +108,8 @@ export function analyticsCards(stats: AdminAnalyticsSummary | undefined): StatCa
       icon: ShoppingBag,
       label: "Catalog Products",
       value: stats?.totalProducts ?? 0,
-      to: "/database",
-      table: "products",
+      sublabel: "Opens the shop inventory",
+      to: "/shop",
     },
     {
       icon: Tag,
@@ -217,6 +217,13 @@ export function dashboardCards(stats: AdminDashboardStats | undefined): StatCard
       label: "Open Support Messages",
       value: stats?.openSupportMessages ?? 0,
       to: "/support",
+    },
+    {
+      icon: ShoppingBag,
+      label: "Shop Items",
+      value: stats?.totalProducts ?? 0,
+      sublabel: "Catalogue with every item link",
+      to: "/shop",
     },
   ];
 }

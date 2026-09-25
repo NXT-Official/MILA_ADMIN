@@ -19,6 +19,7 @@ test("every staff screen re-checks its own permission in its route file", () => 
   const routes: Record<(typeof STAFF_ROUTES)[number], string> = {
     "/dashboard": "dashboard.tsx",
     "/analytics": "analytics.tsx",
+    "/database": "database.tsx",
     "/members": "members.tsx",
     "/subscription-plans": "subscription-plans.tsx",
     "/moderation": "moderation.tsx",

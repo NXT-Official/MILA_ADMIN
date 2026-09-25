@@ -79,15 +79,22 @@ export function ActionItem({
   label,
   onClick,
   destructive,
+  disabled,
+  description,
 }: {
   icon: LucideIcon;
   label: string;
   onClick: () => void;
   destructive?: boolean;
+  disabled?: boolean;
+  /** Plain-English reason, surfaced as a native tooltip — used when the action is blocked. */
+  description?: string;
 }) {
   return (
     <DropdownMenuItem
       onClick={onClick}
+      disabled={disabled}
+      title={description}
       className={destructive ? "text-destructive focus:text-destructive" : undefined}
     >
       <Icon className="mr-2 size-4" strokeWidth={1.75} aria-hidden="true" />

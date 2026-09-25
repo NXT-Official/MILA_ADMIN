@@ -1,40 +1,13 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import {
-  CreditCard,
-  DollarSign,
-  Images,
-  MessageCircle,
-  MessagesSquare,
-  Palette,
-  ShoppingBag,
-  Tag,
-  ListTree,
-  Gauge,
-  Cpu,
-  Coins,
-  Loader2,
-  Activity,
-  Smartphone,
-  TrendingUp,
-} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { adminAnalyticsQueryOptions } from "@/lib/queries/admin";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
-import { AnalyticsTableBrowser } from "@/components/admin/analytics-table-browser";
+import { analyticsCards } from "@/components/admin/stat-cards";
+import { TableBrowser } from "@/components/admin/table-browser";
+import { BROWSABLE_TABLES, type BrowsableTable } from "@/lib/database.functions";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
-import { formatPrice } from "@/lib/utils";
-
-// AI spend accrues in fractions of a cent per call — formatPrice's
-// whole-dollar rounding would show "$0" for a long time, which is
-// inaccurate, not just imprecise.
-function formatAiSpend(usd: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 4,
-  }).format(usd);
-}
 
 export const Route = createFileRoute("/_authed/analytics")({
   beforeLoad: ({ context }) => requireStaffRoutePermission(context.queryClient, "analytics.view"),
@@ -43,6 +16,7 @@ export const Route = createFileRoute("/_authed/analytics")({
 
 function AdminAnalytics() {
   const { data: stats, isLoading } = useQuery(adminAnalyticsQueryOptions());
+  const [table, setTable] = useState<BrowsableTable>(BROWSABLE_TABLES[0]);
 
   if (isLoading) {
     return (
@@ -54,97 +28,17 @@ function AdminAnalytics() {
 
   return (
     <div className="space-y-10">
+      <p className="text-sm text-stone">
+        Select any card to open the table behind its number. Every table is also browsable below.
+      </p>
+
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <AdminStatCard
-          icon={CreditCard}
-          label="Active Subscriptions"
-          value={stats?.activeSubscriptions ?? 0}
-        />
-        <AdminStatCard
-          icon={DollarSign}
-          label="MRR (estimate)"
-          value={formatPrice(stats?.mrr ?? 0, stats?.mrrCurrency ?? "USD")}
-          sublabel="Monthly + yearly plans normalized"
-        />
-        <AdminStatCard
-          icon={DollarSign}
-          label="Total Revenue"
-          value={formatPrice(
-            (stats?.totalRevenueCents ?? 0) / 100,
-            stats?.revenueCurrency ?? "USD",
-          )}
-          sublabel="Completed purchases"
-        />
-        <AdminStatCard icon={Images} label="Looks Generated" value={stats?.totalOutfits ?? 0} />
-        <AdminStatCard
-          icon={MessageCircle}
-          label="Concierge Conversations"
-          value={stats?.totalConciergeConversations ?? 0}
-        />
-        <AdminStatCard
-          icon={MessagesSquare}
-          label="Concierge Messages"
-          value={stats?.totalConciergeMessages ?? 0}
-        />
-        <AdminStatCard
-          icon={Palette}
-          label="Saved Palettes"
-          value={stats?.totalSavedPalettes ?? 0}
-        />
-        <AdminStatCard
-          icon={ShoppingBag}
-          label="Catalog Products"
-          value={stats?.totalProducts ?? 0}
-        />
-        <AdminStatCard icon={Tag} label="Brands" value={stats?.totalBrands ?? 0} />
-        <AdminStatCard
-          icon={ListTree}
-          label="Tagged Post Items"
-          value={stats?.totalPostItems ?? 0}
-        />
-        <AdminStatCard
-          icon={Gauge}
-          label="Active Rate-Limit Buckets"
-          value={stats?.activeRateLimitBuckets ?? 0}
-          sublabel="Operational signal, not a business metric"
-        />
-        <AdminStatCard
-          icon={Coins}
-          label="Total AI Spend"
-          value={formatAiSpend(stats?.totalAiSpendUsd ?? 0)}
-          sublabel={`${stats?.totalAiCalls ?? 0} calls logged`}
-        />
-        <AdminStatCard
-          icon={Cpu}
-          label="Total AI Tokens"
-          value={stats?.totalAiTokens ?? 0}
-          sublabel="Gemini calls report tokens, no cost (model-dependent pricing)"
-        />
-        <AdminStatCard
-          icon={Activity}
-          label="Product Events (30d)"
-          value={stats?.totalAnalyticsEventsLast30d ?? 0}
-          sublabel="signup, onboarding, look-generated, purchase-started"
-        />
-        <AdminStatCard
-          icon={Smartphone}
-          label="Web vs Mobile Events (30d)"
-          value={`${stats?.analyticsEventsBySource.web ?? 0} / ${stats?.analyticsEventsBySource.mobile ?? 0}`}
-          sublabel="web / mobile"
-        />
-        <AdminStatCard
-          icon={TrendingUp}
-          label="Top Event (30d)"
-          value={stats?.topAnalyticsEvents[0]?.eventName ?? "—"}
-          sublabel={
-            stats?.topAnalyticsEvents[0]
-              ? `${stats.topAnalyticsEvents[0].count} occurrences`
-              : "No events yet"
-          }
-        />
+        {analyticsCards(stats).map((card) => (
+          <AdminStatCard key={card.label} {...card} />
+        ))}
       </div>
 
-      <AnalyticsTableBrowser />
+      <TableBrowser table={table} onTableChange={setTable} />
     </div>
   );
 }

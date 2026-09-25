@@ -1,44 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin.functions";
-import type { Database, Json } from "@/integrations/supabase/types";
-
-const PAGE_SIZE = 50;
-
-export const ANALYTICS_BROWSABLE_TABLES = [
-  "subscriptions",
-  "purchases",
-  "products",
-  "brands",
-  "outfits",
-  "post_items",
-  "saved_palettes",
-  "concierge_conversations",
-  "concierge_messages",
-  "staff_audit_log",
-  "rate_limit_buckets",
-  "ai_spend_log",
-  "analytics_events",
-] as const satisfies readonly (keyof Database["public"]["Tables"])[];
-export type BrowsableTable = (typeof ANALYTICS_BROWSABLE_TABLES)[number];
-
-/** Not every table shares a `created_at` column, so the sort column is per-table. */
-const ORDER_COLUMN: Record<BrowsableTable, string> = {
-  subscriptions: "created_at",
-  purchases: "created_at",
-  products: "date_added",
-  brands: "created_at",
-  outfits: "created_at",
-  post_items: "created_at",
-  saved_palettes: "created_at",
-  concierge_conversations: "created_at",
-  concierge_messages: "created_at",
-  staff_audit_log: "created_at",
-  rate_limit_buckets: "window_start",
-  ai_spend_log: "created_at",
-  analytics_events: "created_at",
-};
 
 const ANALYTICS_EVENTS_WINDOW_DAYS = 30;
 
@@ -163,44 +125,4 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
       analyticsEventsBySource,
       topAnalyticsEvents,
     };
-  });
-
-export interface BrowseTableResult {
-  rows: Record<string, Json>[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export const adminBrowseTable = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .validator((input: unknown) =>
-    z
-      .object({
-        table: z.enum(ANALYTICS_BROWSABLE_TABLES),
-        page: z.number().int().min(0),
-      })
-      .parse(input),
-  )
-  .handler(async ({ data, context }): Promise<BrowseTableResult> => {
-    await assertAdmin(context.supabase, context.userId);
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    const from = data.page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    const {
-      data: rows,
-      count,
-      error,
-    } = await supabaseAdmin
-      .from(data.table)
-      .select("*", { count: "exact" })
-      .order(ORDER_COLUMN[data.table], { ascending: false })
-      .range(from, to);
-    if (error) {
-      console.error("[adminBrowseTable] query failed", data.table, error);
-      throw new Error("Couldn't load that table.");
-    }
-
-    return { rows: rows ?? [], total: count ?? 0, page: data.page, pageSize: PAGE_SIZE };
   });

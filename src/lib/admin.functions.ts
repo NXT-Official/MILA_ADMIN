@@ -48,6 +48,13 @@ export interface AdminUserRow {
   is_moderator: boolean;
   suspended: boolean;
   ai_credits: number;
+  /**
+   * True when the account has acted as staff in `staff_audit_log`. Such rows
+   * reference the actor with no delete rule, so the database refuses to delete
+   * the account — the members table uses this to disable the action instead of
+   * offering a click that cannot succeed.
+   */
+  has_staff_activity: boolean;
 }
 
 export const adminListUsers = createServerFn({ method: "GET" })
@@ -64,13 +71,14 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const users = usersRes.users;
     const ids = users.map((u) => u.id);
 
-    const [profilesRes, rolesRes, entRes] = await Promise.all([
+    const [profilesRes, rolesRes, entRes, staffActionsRes] = await Promise.all([
       supabaseAdmin.from("profiles").select("id,full_name,username,suspended").in("id", ids),
       supabaseAdmin.from("user_roles").select("user_id,role").in("user_id", ids),
       supabaseAdmin
         .from("user_entitlements")
         .select("user_id,ai_credits,purchased_credits")
         .in("user_id", ids),
+      supabaseAdmin.from("staff_audit_log").select("actor_user_id").in("actor_user_id", ids),
     ]);
 
     const pMap = new Map((profilesRes.data ?? []).map((profile) => [profile.id, profile]));
@@ -86,6 +94,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
         entitlement.ai_credits + entitlement.purchased_credits,
       ]),
     );
+    const actedAsStaff = new Set((staffActionsRes.data ?? []).map((row) => row.actor_user_id));
 
     return users.map((u) => {
       const profile = pMap.get(u.id);
@@ -99,6 +108,7 @@ export const adminListUsers = createServerFn({ method: "GET" })
         is_moderator: moderatorSet.has(u.id),
         suspended: !!profile?.suspended,
         ai_credits: credMap.get(u.id) ?? 0,
+        has_staff_activity: actedAsStaff.has(u.id),
       };
     });
   });
@@ -214,6 +224,92 @@ export const adminUpdateMember = createServerFn({ method: "POST" })
         error.message.includes("duplicate") ? "Username already taken." : error.message,
       );
     }
+    return { ok: true };
+  });
+
+const DeleteMemberInput = z.object({ user_id: z.string().uuid() });
+
+/**
+ * Permanently deletes an account (auth user + every row that cascades from it).
+ *
+ * Two database facts shape this, both verified against the live project:
+ * `staff_audit_log.target_user_id` references the account with no delete rule,
+ * so any row the role/suspend RPCs wrote blocks the delete until it is unlinked
+ * (the audit trail survives — the same id is kept in `target_id` text). And
+ * `staff_audit_log.actor_user_id` is NOT NULL with no delete rule, so an
+ * account that has itself acted as staff cannot be deleted at all and is
+ * refused explicitly instead of failing with an opaque FK error.
+ */
+export const adminDeleteMember = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => DeleteMemberInput.parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase, context.userId);
+    if (data.user_id === context.userId) throw new Error("You cannot delete your own account.");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const [userRes, profileRes, rolesRes, actorHistoryRes, adminRoleRes] = await Promise.all([
+      supabaseAdmin.auth.admin.getUserById(data.user_id),
+      supabaseAdmin
+        .from("profiles")
+        .select("full_name,username,suspended")
+        .eq("id", data.user_id)
+        .maybeSingle(),
+      supabaseAdmin.from("user_roles").select("role").eq("user_id", data.user_id),
+      supabaseAdmin
+        .from("staff_audit_log")
+        .select("id", { count: "exact", head: true })
+        .eq("actor_user_id", data.user_id),
+      supabaseAdmin.from("user_roles").select("user_id").eq("role", "admin"),
+    ]);
+    if (userRes.error || !userRes.data?.user) throw new Error("Member not found.");
+
+    const profile = profileRes.data ?? null;
+    const roles = (rolesRes.data ?? []).map((row) => row.role);
+    const adminIds = (adminRoleRes.data ?? []).map((row) => row.user_id);
+    const activeStewardCount = adminIds.length
+      ? ((
+          await supabaseAdmin
+            .from("profiles")
+            .select("id", { count: "exact", head: true })
+            .in("id", adminIds)
+            .eq("suspended", false)
+        ).count ?? 0)
+      : 0;
+
+    // Mirrors the last_active_steward guard in the role/suspend RPCs: deleting
+    // the final active Steward would lock the suite for everyone.
+    if (roles.includes("admin") && !profile?.suspended && activeStewardCount <= 1) {
+      throw new Error("Mila must always have at least one active Steward.");
+    }
+    if ((actorHistoryRes.count ?? 0) > 0) {
+      throw new Error(
+        "This account has staff action history in the audit log, so it can't be deleted. Revoke its roles and suspend it instead.",
+      );
+    }
+
+    const { error: unlinkError } = await supabaseAdmin
+      .from("staff_audit_log")
+      .update({ target_user_id: null })
+      .eq("target_user_id", data.user_id);
+    if (unlinkError) {
+      console.error("[adminDeleteMember] could not unlink audit rows", data.user_id, unlinkError);
+      throw new Error("Couldn't delete this account.");
+    }
+
+    // The admin API answers an FK violation with an empty error object, so the
+    // guards above are what make failures explainable; this stays generic.
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.user_id);
+    if (error) {
+      console.error("[adminDeleteMember] delete failed", data.user_id, error);
+      throw new Error("Couldn't delete this account.");
+    }
+
+    await recordStaffAction(context.userId, "member.deleted", "member", data.user_id, {
+      email: userRes.data.user.email ?? null,
+      full_name: profile?.full_name ?? null,
+      username: profile?.username ?? null,
+    });
     return { ok: true };
   });
 

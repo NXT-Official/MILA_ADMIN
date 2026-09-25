@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Users, ShieldCheck, Coins, Images, EyeOff, LifeBuoy, Loader2, Inbox } from "lucide-react";
+import { Users, Loader2, Inbox } from "lucide-react";
 import { adminDashboardQueryOptions } from "@/lib/queries/admin";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
+import { dashboardCards } from "@/components/admin/stat-cards";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 
 export const Route = createFileRoute("/_authed/dashboard")({
@@ -24,27 +25,12 @@ function AdminDashboard() {
 
   return (
     <div className="space-y-10">
+      <p className="text-sm text-stone">Select any card to open the screen that manages it.</p>
+
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-        <AdminStatCard icon={Users} label="Total Members" value={stats?.totalMembers ?? 0} />
-        <AdminStatCard icon={ShieldCheck} label="Stewards" value={stats?.totalStewards ?? 0} />
-        <AdminStatCard
-          icon={Coins}
-          label="AI Credits Available"
-          value={stats?.aiCreditsAvailable ?? 0}
-          sublabel="Current balance across members"
-        />
-        <AdminStatCard icon={Images} label="Feed Posts" value={stats?.totalPosts ?? 0} />
-        <AdminStatCard
-          icon={EyeOff}
-          label="Hidden Posts"
-          value={stats?.hiddenPosts ?? 0}
-          sublabel="Moderation actions taken"
-        />
-        <AdminStatCard
-          icon={LifeBuoy}
-          label="Open Support Messages"
-          value={stats?.openSupportMessages ?? 0}
-        />
+        {dashboardCards(stats).map((card) => (
+          <AdminStatCard key={card.label} {...card} />
+        ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

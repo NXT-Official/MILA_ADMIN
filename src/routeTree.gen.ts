@@ -18,6 +18,7 @@ import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/su
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
+import { Route as AuthedDatabaseRouteImport } from './routes/_authed/database'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
 
@@ -65,6 +66,11 @@ const AuthedMembersRoute = AuthedMembersRouteImport.update({
   path: '/members',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedDatabaseRoute = AuthedDatabaseRouteImport.update({
+  id: '/database',
+  path: '/database',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/database': typeof AuthedDatabaseRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
   '/settings': typeof AuthedSettingsRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/database': typeof AuthedDatabaseRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
   '/settings': typeof AuthedSettingsRoute
@@ -108,6 +116,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/_authed/analytics': typeof AuthedAnalyticsRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/_authed/database': typeof AuthedDatabaseRoute
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/moderation': typeof AuthedModerationRoute
   '/_authed/settings': typeof AuthedSettingsRoute
@@ -122,6 +131,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/analytics'
     | '/dashboard'
+    | '/database'
     | '/members'
     | '/moderation'
     | '/settings'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/analytics'
     | '/dashboard'
+    | '/database'
     | '/members'
     | '/moderation'
     | '/settings'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/_authed/analytics'
     | '/_authed/dashboard'
+    | '/_authed/database'
     | '/_authed/members'
     | '/_authed/moderation'
     | '/_authed/settings'
@@ -226,6 +238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedMembersRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/database': {
+      id: '/_authed/database'
+      path: '/database'
+      fullPath: '/database'
+      preLoaderRoute: typeof AuthedDatabaseRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
@@ -246,6 +265,7 @@ declare module '@tanstack/react-router' {
 interface AuthedRouteChildren {
   AuthedAnalyticsRoute: typeof AuthedAnalyticsRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedDatabaseRoute: typeof AuthedDatabaseRoute
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedModerationRoute: typeof AuthedModerationRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
@@ -256,6 +276,7 @@ interface AuthedRouteChildren {
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAnalyticsRoute: AuthedAnalyticsRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedDatabaseRoute: AuthedDatabaseRoute,
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedModerationRoute: AuthedModerationRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,

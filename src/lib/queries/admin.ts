@@ -8,11 +8,8 @@ import {
   adminListSupportMessages,
 } from "@/lib/admin.functions";
 import { adminListSubscriptionPlans } from "@/lib/subscription-plans.functions";
-import {
-  adminAnalyticsSummary,
-  adminBrowseTable,
-  type BrowsableTable,
-} from "@/lib/analytics.functions";
+import { adminAnalyticsSummary } from "@/lib/analytics.functions";
+import { adminBrowseTable, type BrowsableTable } from "@/lib/database.functions";
 
 export function staffGateQueryOptions() {
   return queryOptions({
@@ -63,9 +60,9 @@ export function adminAnalyticsQueryOptions() {
   });
 }
 
-export function adminAnalyticsTableQueryOptions(table: BrowsableTable, page: number) {
+export function adminTableQueryOptions(table: BrowsableTable, page: number, search: string) {
   return queryOptions({
-    queryKey: queryKeys.adminAnalyticsTable(table, page),
-    queryFn: () => adminBrowseTable({ data: { table, page } }),
+    queryKey: queryKeys.adminTable(table, page, search),
+    queryFn: () => adminBrowseTable({ data: { table, page, search: search || undefined } }),
   });
 }

@@ -16,14 +16,49 @@ Supabase (auth, Postgres, storage) · Bun.
 Two roles, one permission map (`src/lib/authorization.ts`). Every screen sits at its own path and
 names the one permission that opens it:
 
-| Route                  | Permission                  | Admin | Moderator | Purpose                                    |
-| ---------------------- | --------------------------- | :---: | :-------: | ------------------------------------------ |
-| `/`                    | —                           |   ✓   |     ✓     | Staff sign-in                              |
-| `/dashboard`           | `admin.dashboard.view`      |   ✓   |     —     | Stats: members, credits, posts, support    |
-| `/members`             | `members.view`              |   ✓   |     —     | Grant/revoke roles, suspend, create, edit  |
-| `/subscription-plans`  | `subscriptionPlans.manage`  |   ✓   |     —     | Membership plan catalog                    |
-| `/moderation`          | `moderation.view`           |   ✓   |     ✓     | Hide / restore / delete feed posts         |
-| `/support`             | `support.view`              |   ✓   |     ✓     | Help-desk and feedback triage              |
+| Route                 | Permission                 | Admin | Moderator | Purpose                                           |
+| --------------------- | -------------------------- | :---: | :-------: | ------------------------------------------------- |
+| `/`                   | —                          |   ✓   |     ✓     | Staff sign-in                                     |
+| `/dashboard`          | `admin.dashboard.view`     |   ✓   |     —     | Stats: members, credits, posts, support           |
+| `/analytics`          | `analytics.view`           |   ✓   |     —     | Business metrics + table browser                  |
+| `/database`           | `database.view`            |   ✓   |     —     | Read-only viewer for every table                  |
+| `/members`            | `members.view`             |   ✓   |     —     | Grant/revoke roles, suspend, create, edit, delete |
+| `/subscription-plans` | `subscriptionPlans.manage` |   ✓   |     —     | Membership plan catalog                           |
+| `/moderation`         | `moderation.view`          |   ✓   |     ✓     | Hide / restore / delete feed posts                |
+| `/support`            | `support.view`             |   ✓   |     ✓     | Help-desk and feedback triage                     |
+
+Every stat card on `/dashboard` and `/analytics` is a link: dashboard cards open the screen
+that manages the number, analytics cards deep-link into the database viewer
+(`/database?table=<name>`) for the table behind it.
+
+### The database viewer
+
+`/database` (and the browser embedded on `/analytics`) pages through the newest 50 rows of any
+`BROWSABLE_TABLES` entry with a server-side search. Two database facts shape it, both verified
+against the live project:
+
+- `ilike` only works on text columns — against uuid, enum, boolean, numeric or jsonb columns
+  PostgREST fails with `42883` (operator does not exist). `SEARCH_COLUMNS` therefore lists text
+  columns only, and tables with none (`user_roles`, `user_entitlements`) disable the search box.
+- Search terms are stripped of `,`, `(`, `)`, `\`, `*` and `"` before they reach `.or()`, because
+  those characters are PostgREST filter grammar.
+
+### Deleting a member account
+
+`adminDeleteMember` permanently deletes the auth user (profiles, roles, entitlements, posts and
+looks cascade). Two foreign keys on `staff_audit_log` have no delete rule, so the server function:
+
+1. refuses self-deletion and refuses to remove the last active Steward (the same guard as the
+   role/suspend RPCs);
+2. refuses accounts that have acted as staff — `actor_user_id` is NOT NULL, so those rows cannot
+   be re-pointed and the database will not allow the delete; such accounts are revoked and
+   suspended instead (the members table disables the action and says why);
+3. nulls `target_user_id` for rows written by the role/suspend RPCs before deleting — the id stays
+   in `target_id` text, so the audit trail survives;
+4. records `member.deleted` with the deleted account's email/name in the audit metadata.
+
+The Supabase admin API answers an FK violation with an empty error object, which is why steps 1–3
+are explicit pre-flight checks rather than error-message parsing.
 
 `staffHome(roles)` walks `STAFF_ROUTE_PERMISSIONS` in declaration order and returns the first
 route the viewer can open — so an admin lands on `/dashboard` and a moderator on `/moderation`.
@@ -114,4 +149,5 @@ rather than a monorepo.
   asserts this, along with the per-route permission wiring and the sign-out-on-refusal behaviour.
 - Suspended staff accounts are blocked by `SuspendedGate` client-side and by
   `requireSupabaseAuth` server-side.
+
 # MILA_ADMIN

@@ -3,6 +3,8 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": { title: "Dashboard", subtitle: "Overview & analytics" },
+  "/analytics": { title: "Analytics", subtitle: "Business metrics, one click to the data" },
+  "/database": { title: "Database", subtitle: "Read-only view of every table" },
   "/members": { title: "Members", subtitle: "Manage accounts & stewardship" },
   "/subscription-plans": {
     title: "Subscription Plans",

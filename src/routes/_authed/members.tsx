@@ -8,9 +8,15 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { getMembersColumns } from "@/components/admin/members-columns";
 import { MemberFormDialog } from "@/components/admin/member-form-dialog";
+import { MemberDeleteDialog } from "@/components/admin/member-delete-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { queryKeys } from "@/constants/query-keys";
-import { adminSetUserRole, adminSetSuspended, type AdminUserRow } from "@/lib/admin.functions";
+import {
+  adminDeleteMember,
+  adminSetUserRole,
+  adminSetSuspended,
+  type AdminUserRow,
+} from "@/lib/admin.functions";
 import { adminMembersQueryOptions } from "@/lib/queries/admin";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 import {
@@ -29,10 +35,13 @@ function MembersPage() {
   const qc = useQueryClient();
   const setRole = useServerFn(adminSetUserRole);
   const setSuspended = useServerFn(adminSetSuspended);
+  const deleteMember = useServerFn(adminDeleteMember);
   const [formOpen, setFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<AdminUserRow | undefined>(undefined);
   const [roleChange, setRoleChange] = useState<PendingRoleChange | null>(null);
   const [rolePending, setRolePending] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
+  const [deletePending, setDeletePending] = useState(false);
 
   const { data, isLoading } = useQuery(adminMembersQueryOptions());
 
@@ -89,12 +98,29 @@ function MembersPage() {
     }
   }
 
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    const label = deleteTarget.full_name || deleteTarget.username || deleteTarget.email || "Member";
+    setDeletePending(true);
+    try {
+      await deleteMember({ data: { user_id: deleteTarget.id } });
+      toast.success(`${label}'s account deleted.`);
+      await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      setDeleteTarget(null);
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't delete this account."));
+    } finally {
+      setDeletePending(false);
+    }
+  }
+
   const columns = getMembersColumns({
     currentUserId: user?.id,
     pendingRoleChange: rolePending,
     onToggleRole: requestRoleChange,
     onToggleSuspended: toggleSuspended,
     onEdit: openEdit,
+    onDelete: setDeleteTarget,
   });
 
   return (
@@ -137,6 +163,12 @@ function MembersPage() {
         pending={rolePending}
         onOpenChange={(open) => !open && !rolePending && setRoleChange(null)}
         onConfirm={confirmRoleChange}
+      />
+      <MemberDeleteDialog
+        member={deleteTarget}
+        pending={deletePending}
+        onOpenChange={(open) => !open && !deletePending && setDeleteTarget(null)}
+        onConfirm={confirmDelete}
       />
     </div>
   );

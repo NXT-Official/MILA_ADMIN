@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { UserX, UserCheck, Pencil } from "lucide-react";
+import { UserX, UserCheck, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ActionItem, RowActionsMenu, ToggleCell } from "@/components/admin/table-cells";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
@@ -11,6 +11,7 @@ interface MembersColumnsOptions {
   onToggleRole: (member: AdminUserRow, role: "admin" | "moderator", grant: boolean) => void;
   onToggleSuspended: (id: string, suspended: boolean) => void;
   onEdit: (member: AdminUserRow) => void;
+  onDelete: (member: AdminUserRow) => void;
 }
 
 export function getMembersColumns({
@@ -19,6 +20,7 @@ export function getMembersColumns({
   onToggleRole,
   onToggleSuspended,
   onEdit,
+  onDelete,
 }: MembersColumnsOptions): ColumnDef<AdminUserRow>[] {
   return [
     {
@@ -98,6 +100,20 @@ export function getMembersColumns({
             label={row.original.suspended ? "Reinstate" : "Suspend"}
             onClick={() => onToggleSuspended(row.original.id, !row.original.suspended)}
           />
+          {row.original.id !== currentUserId && (
+            <ActionItem
+              icon={Trash2}
+              label="Delete"
+              destructive
+              disabled={row.original.has_staff_activity}
+              description={
+                row.original.has_staff_activity
+                  ? "Blocked: this account has staff action history. Revoke its roles and suspend it instead."
+                  : undefined
+              }
+              onClick={() => onDelete(row.original)}
+            />
+          )}
         </RowActionsMenu>
       ),
     },

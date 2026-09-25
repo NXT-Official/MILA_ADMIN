@@ -10,6 +10,12 @@ import {
 import { adminListSubscriptionPlans } from "@/lib/subscription-plans.functions";
 import { adminAnalyticsSummary } from "@/lib/analytics.functions";
 import { adminBrowseTable, type BrowsableTable } from "@/lib/database.functions";
+import {
+  adminListShopItems,
+  adminShopOptions,
+  toShopFilterInput,
+  type ShopFilterState,
+} from "@/lib/shop.functions";
 
 export function staffGateQueryOptions() {
   return queryOptions({
@@ -64,5 +70,19 @@ export function adminTableQueryOptions(table: BrowsableTable, page: number, sear
   return queryOptions({
     queryKey: queryKeys.adminTable(table, page, search),
     queryFn: () => adminBrowseTable({ data: { table, page, search: search || undefined } }),
+  });
+}
+
+export function adminShopItemsQueryOptions(filters: ShopFilterState, page: number) {
+  return queryOptions({
+    queryKey: queryKeys.adminShopItems(filters, page),
+    queryFn: () => adminListShopItems({ data: { ...toShopFilterInput(filters), page } }),
+  });
+}
+
+export function adminShopOptionsQueryOptions() {
+  return queryOptions({
+    queryKey: queryKeys.adminShopOptions,
+    queryFn: () => adminShopOptions(),
   });
 }

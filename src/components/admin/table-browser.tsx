@@ -27,6 +27,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { adminTableQueryOptions } from "@/lib/queries/admin";
+import { downloadCsv, toCsv, type CsvColumn } from "@/lib/csv";
 import {
   BROWSABLE_TABLES,
   SEARCH_COLUMNS,
@@ -42,17 +43,13 @@ function formatCell(value: unknown): string {
 }
 
 /** Current page as CSV, so an owner can take the data into a spreadsheet. */
-function downloadCsv(table: BrowsableTable, columns: string[], rows: Record<string, unknown>[]) {
-  const escape = (value: unknown) => `"${formatCell(value).replace(/"/g, '""')}"`;
-  const lines = [columns.map(escape).join(",")];
-  for (const row of rows) lines.push(columns.map((column) => escape(row[column])).join(","));
-  const blob = new Blob([`\ufeff${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = `${table}-page.csv`;
-  anchor.click();
-  URL.revokeObjectURL(url);
+function exportPageCsv(table: BrowsableTable, columns: string[], rows: Record<string, unknown>[]) {
+  const csvColumns: CsvColumn<Record<string, unknown>>[] = columns.map((column) => ({
+    key: column,
+    label: column,
+    value: (row) => formatCell(row[column]),
+  }));
+  downloadCsv(`${table}-page.csv`, toCsv(csvColumns, rows));
 }
 
 export function TableBrowser({
@@ -134,7 +131,7 @@ export function TableBrowser({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => downloadCsv(table, columns, rows)}
+            onClick={() => exportPageCsv(table, columns, rows)}
             disabled={rows.length === 0}
           >
             <Download aria-hidden="true" />

@@ -15,6 +15,7 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedSupportRouteImport } from './routes/_authed/support'
 import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/subscription-plans'
+import { Route as AuthedShopRouteImport } from './routes/_authed/shop'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
@@ -49,6 +50,11 @@ const AuthedSupportRoute = AuthedSupportRouteImport.update({
 const AuthedSubscriptionPlansRoute = AuthedSubscriptionPlansRouteImport.update({
   id: '/subscription-plans',
   path: '/subscription-plans',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedShopRoute = AuthedShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
@@ -92,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
   '/settings': typeof AuthedSettingsRoute
+  '/shop': typeof AuthedShopRoute
   '/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/support': typeof AuthedSupportRoute
 }
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
   '/settings': typeof AuthedSettingsRoute
+  '/shop': typeof AuthedShopRoute
   '/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/support': typeof AuthedSupportRoute
 }
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/moderation': typeof AuthedModerationRoute
   '/_authed/settings': typeof AuthedSettingsRoute
+  '/_authed/shop': typeof AuthedShopRoute
   '/_authed/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/_authed/support': typeof AuthedSupportRoute
 }
@@ -135,6 +144,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/settings'
+    | '/shop'
     | '/subscription-plans'
     | '/support'
   fileRoutesByTo: FileRoutesByTo
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/settings'
+    | '/shop'
     | '/subscription-plans'
     | '/support'
   id:
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/_authed/members'
     | '/_authed/moderation'
     | '/_authed/settings'
+    | '/_authed/shop'
     | '/_authed/subscription-plans'
     | '/_authed/support'
   fileRoutesById: FileRoutesById
@@ -217,6 +229,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSubscriptionPlansRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/shop': {
+      id: '/_authed/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof AuthedShopRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/settings': {
       id: '/_authed/settings'
       path: '/settings'
@@ -269,6 +288,7 @@ interface AuthedRouteChildren {
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedModerationRoute: typeof AuthedModerationRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
+  AuthedShopRoute: typeof AuthedShopRoute
   AuthedSubscriptionPlansRoute: typeof AuthedSubscriptionPlansRoute
   AuthedSupportRoute: typeof AuthedSupportRoute
 }
@@ -280,6 +300,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedModerationRoute: AuthedModerationRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedShopRoute: AuthedShopRoute,
   AuthedSubscriptionPlansRoute: AuthedSubscriptionPlansRoute,
   AuthedSupportRoute: AuthedSupportRoute,
 }

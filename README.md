@@ -22,6 +22,7 @@ names the one permission that opens it:
 | `/dashboard`          | `admin.dashboard.view`     |   ✓   |     —     | Stats: members, credits, posts, support           |
 | `/analytics`          | `analytics.view`           |   ✓   |     —     | Business metrics + table browser                  |
 | `/database`           | `database.view`            |   ✓   |     —     | Read-only viewer for every table                  |
+| `/shop`               | `shop.view`                |   ✓   |     —     | Catalogue items, links and brands                 |
 | `/members`            | `members.view`             |   ✓   |     —     | Grant/revoke roles, suspend, create, edit, delete |
 | `/subscription-plans` | `subscriptionPlans.manage` |   ✓   |     —     | Membership plan catalog                           |
 | `/moderation`         | `moderation.view`          |   ✓   |     ✓     | Hide / restore / delete feed posts                |
@@ -42,6 +43,16 @@ against the live project:
   columns only, and tables with none (`user_roles`, `user_entitlements`) disable the search box.
 - Search terms are stripped of `,`, `(`, `)`, `\`, `*` and `"` before they reach `.or()`, because
   those characters are PostgREST filter grammar.
+
+### The shop inventory
+
+`/shop` lists the whole catalogue — image, brand, category, gender, price (with any discount),
+stock and verification — and every outbound link the item carries: the affiliate product link,
+the brand site and the image URL, each openable and copyable from the item's detail dialog.
+Filters (search, category, brand, gender, stock) run server-side against `products`, and the
+`Export CSV` button writes the filtered catalogue out with the links included, so the inventory
+can leave the console. `SHOP_CSV_COLUMNS` in `src/lib/shop.functions.ts` defines that spreadsheet
+layout; brand details are flattened into each row by the embedded `brands` join.
 
 ### Deleting a member account
 

@@ -9,4 +9,6 @@ export const queryKeys = {
   adminAnalytics: ["admin:analytics"] as const,
   adminTable: (table: string, page: number, search: string) =>
     ["admin:database-table", table, page, search] as const,
+  adminShopItems: (filters: object, page: number) => ["admin:shop-items", filters, page] as const,
+  adminShopOptions: ["admin:shop-options"] as const,
 };

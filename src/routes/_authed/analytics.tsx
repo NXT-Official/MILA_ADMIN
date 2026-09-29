@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { adminAnalyticsQueryOptions } from "@/lib/queries/admin";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { analyticsCards } from "@/components/admin/stat-cards";
+import { RevenuePanel } from "@/components/admin/revenue-panel";
 import { TableBrowser } from "@/components/admin/table-browser";
 import { BROWSABLE_TABLES, type BrowsableTable } from "@/lib/database.functions";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
@@ -31,6 +32,8 @@ function AdminAnalytics() {
       <p className="text-sm text-stone">
         Select any card to open the table behind its number. Every table is also browsable below.
       </p>
+
+      <RevenuePanel revenue={stats?.revenue} />
 
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {analyticsCards(stats).map((card) => (

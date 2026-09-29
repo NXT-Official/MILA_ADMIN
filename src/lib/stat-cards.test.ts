@@ -29,8 +29,19 @@ test("cards read their values from the stats they are handed", () => {
     activeSubscriptions: 7,
     mrr: 42,
     mrrCurrency: "USD",
-    totalRevenueCents: 123_400,
-    revenueCurrency: "USD",
+    revenue: {
+      available: true,
+      note: null,
+      currency: "USD",
+      grossCents: 123_400,
+      taxCents: 9_255,
+      netCents: 114_145,
+      taxKind: "percent",
+      taxValue: 7.5,
+      transactionCount: 3,
+      mixedCurrencies: false,
+      truncated: false,
+    },
     totalOutfits: 3,
     totalConciergeConversations: 1,
     totalConciergeMessages: 2,
@@ -48,6 +59,83 @@ test("cards read their values from the stats they are handed", () => {
   });
   expect(first.label).toBe("Active Subscriptions");
   expect(first.value).toBe(7);
+
+  // A refund or a plan change moves the tax card's description, and the
+  // per-call figure is the total spend over the calls that could be priced.
+  const cards = analyticsCards({
+    activeSubscriptions: 0,
+    mrr: 0,
+    mrrCurrency: "USD",
+    revenue: {
+      available: true,
+      note: null,
+      currency: "USD",
+      grossCents: 0,
+      taxCents: 0,
+      netCents: 0,
+      taxKind: "amount",
+      taxValue: 12.5,
+      transactionCount: 0,
+      mixedCurrencies: false,
+      truncated: false,
+    },
+    totalOutfits: 0,
+    totalConciergeConversations: 0,
+    totalConciergeMessages: 0,
+    totalSavedPalettes: 0,
+    totalProducts: 0,
+    totalBrands: 0,
+    totalPostItems: 0,
+    activeRateLimitBuckets: 0,
+    totalAiCalls: 4,
+    totalAiSpendUsd: 0.0042,
+    totalAiTokens: 0,
+    aiCostPerCallUsd: 0.00105,
+    totalAnalyticsEventsLast30d: 0,
+    analyticsEventsBySource: {},
+    topAnalyticsEvents: [],
+  });
+  const taxCard = cards.find((card) => card.label === "Revenue Tax");
+  expect(taxCard?.value).toBe("12.5 deducted from gross");
+  expect(taxCard?.to).toBe("/ai-settings");
+  const perCall = cards.find((card) => card.label === "AI Cost per Call");
+  expect(perCall?.value).toBe("$0.0011");
+  expect(perCall?.to).toBe("/database");
+
+  const [noSpendYet] = analyticsCards({
+    activeSubscriptions: 0,
+    mrr: 0,
+    mrrCurrency: "USD",
+    revenue: {
+      available: false,
+      note: null,
+      currency: "USD",
+      grossCents: 0,
+      taxCents: 0,
+      netCents: 0,
+      taxKind: "percent",
+      taxValue: 0,
+      transactionCount: 0,
+      mixedCurrencies: false,
+      truncated: false,
+    },
+    totalOutfits: 0,
+    totalConciergeConversations: 0,
+    totalConciergeMessages: 0,
+    totalSavedPalettes: 0,
+    totalProducts: 0,
+    totalBrands: 0,
+    totalPostItems: 0,
+    activeRateLimitBuckets: 0,
+    totalAiCalls: 0,
+    totalAiSpendUsd: 0,
+    totalAiTokens: 0,
+    aiCostPerCallUsd: null,
+    totalAnalyticsEventsLast30d: 0,
+    analyticsEventsBySource: {},
+    topAnalyticsEvents: [],
+  });
+  expect(noSpendYet.label).toBe("Active Subscriptions");
 
   const hiddenPosts = dashboardCards({
     totalMembers: 1,
@@ -69,8 +157,19 @@ test("the catalogue count opens the shop inventory from both screens", () => {
     activeSubscriptions: 0,
     mrr: 0,
     mrrCurrency: "USD",
-    totalRevenueCents: 0,
-    revenueCurrency: "USD",
+    revenue: {
+      available: false,
+      note: "Paddle keys aren't set on this deployment, so revenue can't be read.",
+      currency: "USD",
+      grossCents: 0,
+      taxCents: 0,
+      netCents: 0,
+      taxKind: "percent",
+      taxValue: 0,
+      transactionCount: 0,
+      mixedCurrencies: false,
+      truncated: false,
+    },
     totalOutfits: 0,
     totalConciergeConversations: 0,
     totalConciergeMessages: 0,

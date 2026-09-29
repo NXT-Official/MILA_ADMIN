@@ -25,6 +25,7 @@ names the one permission that opens it:
 | `/shop`               | `shop.view`                |   ✓   |     —     | Catalogue items, links and brands                 |
 | `/members`            | `members.view`             |   ✓   |     —     | Grant/revoke roles, suspend, create, edit, delete |
 | `/subscription-plans` | `subscriptionPlans.manage` |   ✓   |     —     | Membership plan catalog                           |
+| `/ai-settings`        | `aiSettings.manage`        |   ✓   |     —     | Styling models, revenue tax, AI cost per call     |
 | `/moderation`         | `moderation.view`          |   ✓   |     ✓     | Hide / restore / delete feed posts                |
 | `/support`            | `support.view`             |   ✓   |     ✓     | Help-desk and feedback triage                     |
 
@@ -71,6 +72,74 @@ looks cascade). Two foreign keys on `staff_audit_log` have no delete rule, so th
 The Supabase admin API answers an FK violation with an empty error object, which is why steps 1–3
 are explicit pre-flight checks rather than error-message parsing.
 
+### Switching the styling models (`/ai-settings`)
+
+Both model ids behind styling live in the member app's **`platform_settings`** table (single row,
+MILA migration `20260929043000_add_platform_settings.sql`). The member app resolves them per
+request in `src/lib/platform-settings.server.ts` with a 30-second in-process cache, so saving here
+changes the model the next member request uses — no deploy, no restart, both apps stay up.
+
+- **Text & vision model** serves look composition, item detection and colour analysis, so a
+  replacement must support images _and_ structured output.
+- **Image model** serves the look render, style sheet and photo preview.
+- The catalog in `src/lib/ai-models.ts` offers the current DeepSeek/Muse pair plus the
+  Claude/GPT-6/Gemini classes of the same generation; a **custom id** is accepted behind the same
+  pattern the database `CHECK` enforces (`vendor/model`), so a model released tomorrow can be
+  switched on without a code change.
+- `SHIPPED_DEFAULTS` here must stay equal to the column defaults in the migration — "Restore the
+  shipped models" writes those ids, and one of the tests asserts the pair.
+
+The member app logs every AI call in `ai_spend_log` with the model that actually ran, which is what
+makes the per-model and per-call figures on this screen honest across a switch.
+
+### Refunds and plan changes
+
+A member's row menu has **Plan & billing**: refund the latest payment and cancel, downgrade or
+switch the subscription. The console calls Paddle directly (`src/lib/paddle.server.ts`) and then
+mirrors the result into `subscriptions`, so the member app agrees immediately instead of waiting
+for the next webhook.
+
+- Refund = `POST /adjustments` `{ action: "refund", type: "full", transaction_id, reason }` against
+  the newest **completed** transaction of the subscription.
+- Cancel = `POST /subscriptions/{id}/cancel`. `effective_from: immediately` **only** when refunding
+  (a refunded payment must not keep serving the period); otherwise `next_billing_period`.
+- Switch = `PATCH /subscriptions/{id}` with the target plan's `paddle_price_id` and
+  `proration_billing_mode: "do_not_bill"` — staff are fixing a plan, not charging a card; the
+  member app's own checkout stays the billing path. A plan without a Paddle price cannot be
+  switched onto, and the dialog says so instead of firing a doomed request.
+- The dialog refuses a second refund on a payment Paddle already carries a refund for.
+- Every one of these writes `member.billing_updated` to the audit log with the from/to plan,
+  the refund id and its status, and the reason (which is also sent to Paddle).
+- Refund status is Paddle's own (`approved`, `pending_approval`, …) — the toast reports it rather
+  than claiming the money has landed.
+
+### Manual styling credits
+
+**Add styling credits** on a member's row grants credits through the member app's `grant_ai_credits`
+RPC — the same ledger `consume_ai_credit` spends from — with the member's plan entitlement passed
+as the daily allowance, exactly as `MILA/src/lib/credits.server.ts` resolves it. A hand-added
+credit therefore behaves like a purchased one and survives the daily reset. Each grant writes
+`member.credits_granted` with the amount, the note and the resulting balance.
+
+### Revenue: gross, tax, net
+
+`/analytics` opens with a revenue panel: **gross** (completed Paddle transactions), the **tax
+deduction** configured on `/ai-settings`, and **net** = gross − tax.
+
+- Gross is read from Paddle, not from `purchases`: nothing in either app writes a purchase row yet
+  (checkout runs through Paddle's hosted flow), so summing that table would report a confident zero
+  forever. Paddle's `GET /transactions?status=completed` is the money that actually moved.
+- The tax is one of two kinds, stored on `platform_settings` and set on `/ai-settings`:
+  `percent` (a share of gross) or `amount` (a fixed deduction in currency units). Both are floats;
+  the value is rounded to whole cents and **clamped to gross**, so net can never go negative.
+- Only `completed` transactions count, only the dominant currency is summed (the rest are reported
+  as skipped), and if the payment list is longer than the pages we read, the panel says the totals
+  cover the newest payments only.
+- Without Paddle keys the panel says revenue is unavailable and why, rather than showing `$0`.
+
+The **cost per call** figures come from `ai_spend_log`: total AI spend ÷ calls logged, overall and
+per model, over the same 30-day window (other cards on `/analytics` still show all-time totals).
+
 `staffHome(roles)` walks `STAFF_ROUTE_PERMISSIONS` in declaration order and returns the first
 route the viewer can open — so an admin lands on `/dashboard` and a moderator on `/moderation`.
 The sidebar filters by the same map, so a moderator never sees a link they cannot follow.
@@ -96,7 +165,8 @@ Every privileged mutation writes a `staff_audit_log` row via `recordStaffAction`
 
 ## Environment
 
-Copy `.env.example` to `.env`. All five values are the same Supabase project as the member app.
+Copy `.env.example` to `.env`. The Supabase values are the same project as the member app; the
+Paddle pair is optional and only needed for refunds and revenue reporting.
 
 | Variable                        | Scope              | Notes                                                       |
 | ------------------------------- | ------------------ | ----------------------------------------------------------- |
@@ -107,9 +177,14 @@ Copy `.env.example` to `.env`. All five values are the same Supabase project as 
 | `SUPABASE_SERVICE_ROLE_KEY`     | Server, **secret** | Required — member listing, image signing, and the audit log |
 | `VITE_HCAPTCHA_SITEKEY`         | Client             | hCaptcha on the sign-in form                                |
 | `HCAPTCHA_SECRET`               | Server, **secret** | hCaptcha verification                                       |
+| `PADDLE_ENV`                    | Server             | `sandbox` (default) or `production`                         |
+| `PADDLE_SANDBOX_API_KEY`        | Server, **secret** | Sandbox Paddle key — refunds and revenue in sandbox         |
+| `PADDLE_API_KEY`                | Server, **secret** | Production Paddle key, used when `PADDLE_ENV=production`    |
 
-No Paddle, Sanity, AI, or Cloudflare credentials — nothing in this suite calls them. The plan
-editor stores Paddle product/price **ids** as plain text columns; it never talks to Paddle.
+The Paddle keys are the only outbound credentials this suite uses, and only for `/ai-settings` and
+the refund/revenue paths — the plan editor still stores Paddle product/price **ids** as plain text
+and never calls Paddle. Without the keys the console runs normally: `/analytics` reports revenue as
+unavailable, and the billing dialog refuses a refund with the reason.
 
 ## Getting started
 

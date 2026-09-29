@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import { UserX, UserCheck, Pencil, Trash2 } from "lucide-react";
+import { UserX, UserCheck, Pencil, Trash2, CreditCard, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ActionItem, RowActionsMenu, ToggleCell } from "@/components/admin/table-cells";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
@@ -12,6 +12,10 @@ interface MembersColumnsOptions {
   onToggleSuspended: (id: string, suspended: boolean) => void;
   onEdit: (member: AdminUserRow) => void;
   onDelete: (member: AdminUserRow) => void;
+  /** Refund + cancel/downgrade/switch, through Paddle. */
+  onManageBilling: (member: AdminUserRow) => void;
+  /** Manual styling-credit grant on the member app's credit ledger. */
+  onGrantCredits: (member: AdminUserRow) => void;
 }
 
 export function getMembersColumns({
@@ -21,6 +25,8 @@ export function getMembersColumns({
   onToggleSuspended,
   onEdit,
   onDelete,
+  onManageBilling,
+  onGrantCredits,
 }: MembersColumnsOptions): ColumnDef<AdminUserRow>[] {
   return [
     {
@@ -95,6 +101,16 @@ export function getMembersColumns({
       cell: ({ row }) => (
         <RowActionsMenu label="Open actions">
           <ActionItem icon={Pencil} label="Edit" onClick={() => onEdit(row.original)} />
+          <ActionItem
+            icon={CreditCard}
+            label="Plan & billing"
+            onClick={() => onManageBilling(row.original)}
+          />
+          <ActionItem
+            icon={Coins}
+            label="Add styling credits"
+            onClick={() => onGrantCredits(row.original)}
+          />
           <ActionItem
             icon={row.original.suspended ? UserCheck : UserX}
             label={row.original.suspended ? "Reinstate" : "Suspend"}

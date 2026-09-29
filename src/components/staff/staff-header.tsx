@@ -11,6 +11,10 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
     title: "Subscription Plans",
     subtitle: "Manage the membership plan catalog",
   },
+  "/ai-settings": {
+    title: "AI Settings",
+    subtitle: "Models behind styling, revenue tax & cost per call",
+  },
   "/moderation": { title: "Moderation", subtitle: "Review and moderate the feed" },
   "/support": { title: "Support", subtitle: "Help desk & feedback" },
 };

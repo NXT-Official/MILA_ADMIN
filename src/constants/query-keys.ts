@@ -7,6 +7,8 @@ export const queryKeys = {
   adminDashboard: ["admin:dashboard"] as const,
   adminSubscriptionPlans: ["admin:subscription-plans"] as const,
   adminAnalytics: ["admin:analytics"] as const,
+  adminAiSettings: ["admin:ai-settings"] as const,
+  adminMemberBilling: (userId: string | undefined) => ["admin:member-billing", userId] as const,
   adminTable: (table: string, page: number, search: string) =>
     ["admin:database-table", table, page, search] as const,
   adminShopItems: (filters: object, page: number) => ["admin:shop-items", filters, page] as const,

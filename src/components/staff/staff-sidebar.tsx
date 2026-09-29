@@ -9,6 +9,7 @@ import {
   ShieldAlert,
   LifeBuoy,
   CreditCard,
+  Cpu,
   LogOut,
   Loader2,
   Settings,
@@ -36,6 +37,7 @@ const STAFF_LINKS: StaffNavItem[] = [
   { to: "/shop", label: "Shop", icon: ShoppingBag },
   { to: "/members", label: "Members", icon: Users },
   { to: "/subscription-plans", label: "Plans", icon: CreditCard },
+  { to: "/ai-settings", label: "AI Settings", icon: Cpu },
   { to: "/moderation", label: "Moderation", icon: ShieldAlert },
   { to: "/support", label: "Support", icon: LifeBuoy },
 ];

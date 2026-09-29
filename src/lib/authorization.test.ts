@@ -23,6 +23,7 @@ test("a moderator is shut out of every admin-only screen", () => {
     "/shop",
     "/members",
     "/subscription-plans",
+    "/ai-settings",
   ] as const;
   for (const route of adminOnly) {
     expect(hasPermission(["moderator"], STAFF_ROUTE_PERMISSIONS[route])).toBe(false);

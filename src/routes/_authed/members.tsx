@@ -9,6 +9,11 @@ import { DataTable } from "@/components/ui/data-table";
 import { getMembersColumns } from "@/components/admin/members-columns";
 import { MemberFormDialog } from "@/components/admin/member-form-dialog";
 import { MemberDeleteDialog } from "@/components/admin/member-delete-dialog";
+import {
+  MemberBillingDialog,
+  type BillingDialogSubmission,
+} from "@/components/admin/member-billing-dialog";
+import { MemberCreditsDialog } from "@/components/admin/member-credits-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { queryKeys } from "@/constants/query-keys";
 import {
@@ -17,6 +22,7 @@ import {
   adminSetSuspended,
   type AdminUserRow,
 } from "@/lib/admin.functions";
+import { adminGrantStylingCredits, adminRefundMemberPlan } from "@/lib/member-billing.functions";
 import { adminMembersQueryOptions } from "@/lib/queries/admin";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 import {
@@ -42,6 +48,12 @@ function MembersPage() {
   const [rolePending, setRolePending] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+  const [billingTarget, setBillingTarget] = useState<AdminUserRow | null>(null);
+  const [billingPending, setBillingPending] = useState(false);
+  const [creditsTarget, setCreditsTarget] = useState<AdminUserRow | null>(null);
+  const [creditsPending, setCreditsPending] = useState(false);
+  const refundPlan = useServerFn(adminRefundMemberPlan);
+  const grantCredits = useServerFn(adminGrantStylingCredits);
 
   const { data, isLoading } = useQuery(adminMembersQueryOptions());
 
@@ -114,6 +126,49 @@ function MembersPage() {
     }
   }
 
+  async function submitBilling(submission: BillingDialogSubmission) {
+    if (!billingTarget) return;
+    const target = billingTarget;
+    setBillingPending(true);
+    try {
+      const result = await refundPlan({ data: { user_id: target.id, ...submission } });
+      toast.success(
+        result.message,
+        result.refund ? { description: result.refund.message } : undefined,
+      );
+      await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      qc.invalidateQueries({ queryKey: queryKeys.adminMemberBilling(target.id) });
+      // A refund moves the numbers on /analytics.
+      qc.invalidateQueries({ queryKey: queryKeys.adminAnalytics });
+      setBillingTarget(null);
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't update this member's billing."));
+    } finally {
+      setBillingPending(false);
+    }
+  }
+
+  async function submitCredits(grant: { amount: number; note: string }) {
+    if (!creditsTarget) return;
+    const target = creditsTarget;
+    setCreditsPending(true);
+    try {
+      const result = await grantCredits({
+        data: { user_id: target.id, amount: grant.amount, note: grant.note },
+      });
+      toast.success(
+        `${result.amount} styling credit${result.amount === 1 ? "" : "s"} added — new balance ${result.totalCredits}.`,
+      );
+      await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      qc.invalidateQueries({ queryKey: queryKeys.adminMemberBilling(target.id) });
+      setCreditsTarget(null);
+    } catch (e) {
+      toast.error(errorMessage(e, "Couldn't add credits."));
+    } finally {
+      setCreditsPending(false);
+    }
+  }
+
   const columns = getMembersColumns({
     currentUserId: user?.id,
     pendingRoleChange: rolePending,
@@ -121,6 +176,8 @@ function MembersPage() {
     onToggleSuspended: toggleSuspended,
     onEdit: openEdit,
     onDelete: setDeleteTarget,
+    onManageBilling: setBillingTarget,
+    onGrantCredits: setCreditsTarget,
   });
 
   return (
@@ -169,6 +226,18 @@ function MembersPage() {
         pending={deletePending}
         onOpenChange={(open) => !open && !deletePending && setDeleteTarget(null)}
         onConfirm={confirmDelete}
+      />
+      <MemberBillingDialog
+        member={billingTarget}
+        pending={billingPending}
+        onOpenChange={(open) => !open && !billingPending && setBillingTarget(null)}
+        onSubmit={submitBilling}
+      />
+      <MemberCreditsDialog
+        member={creditsTarget}
+        pending={creditsPending}
+        onOpenChange={(open) => !open && !creditsPending && setCreditsTarget(null)}
+        onSubmit={submitCredits}
       />
     </div>
   );

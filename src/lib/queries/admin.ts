@@ -9,6 +9,8 @@ import {
 } from "@/lib/admin.functions";
 import { adminListSubscriptionPlans } from "@/lib/subscription-plans.functions";
 import { adminAnalyticsSummary } from "@/lib/analytics.functions";
+import { adminAiSettings } from "@/lib/ai-settings.functions";
+import { adminGetMemberBilling } from "@/lib/member-billing.functions";
 import { adminBrowseTable, type BrowsableTable } from "@/lib/database.functions";
 import {
   adminListShopItems,
@@ -63,6 +65,21 @@ export function adminAnalyticsQueryOptions() {
   return queryOptions({
     queryKey: queryKeys.adminAnalytics,
     queryFn: () => adminAnalyticsSummary(),
+  });
+}
+
+export function adminAiSettingsQueryOptions() {
+  return queryOptions({
+    queryKey: queryKeys.adminAiSettings,
+    queryFn: () => adminAiSettings(),
+  });
+}
+
+export function adminMemberBillingQueryOptions(userId: string | undefined) {
+  return queryOptions({
+    queryKey: queryKeys.adminMemberBilling(userId),
+    queryFn: () => adminGetMemberBilling({ data: { user_id: userId ?? "" } }),
+    enabled: !!userId,
   });
 }
 

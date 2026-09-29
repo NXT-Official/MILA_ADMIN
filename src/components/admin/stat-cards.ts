@@ -25,6 +25,7 @@ import type { AdminAnalyticsSummary } from "@/lib/analytics.functions";
 import type { BrowsableTable } from "@/lib/database.functions";
 import type { StaffRoute } from "@/lib/authorization";
 import { formatPrice } from "@/lib/utils";
+import { describeTaxSetting } from "@/lib/revenue";
 
 /**
  * Every stat card is a door. Analytics cards open the table that backs their
@@ -42,7 +43,7 @@ export type StatCard = {
 // AI spend accrues in fractions of a cent per call — formatPrice's
 // whole-dollar rounding would show "$0" for a long time, which is
 // inaccurate, not just imprecise.
-function formatAiSpend(usd: number): string {
+export function formatAiSpend(usd: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -70,11 +71,10 @@ export function analyticsCards(stats: AdminAnalyticsSummary | undefined): StatCa
     },
     {
       icon: DollarSign,
-      label: "Total Revenue",
-      value: formatPrice((stats?.totalRevenueCents ?? 0) / 100, stats?.revenueCurrency ?? "USD"),
-      sublabel: "Completed purchases",
-      to: "/database",
-      table: "purchases",
+      label: "Revenue Tax",
+      value: describeTaxSetting(stats?.revenue.taxKind ?? "percent", stats?.revenue.taxValue ?? 0),
+      sublabel: "Sets the net figure below the cards",
+      to: "/ai-settings",
     },
     {
       icon: Images,
@@ -138,6 +138,17 @@ export function analyticsCards(stats: AdminAnalyticsSummary | undefined): StatCa
       label: "Total AI Spend",
       value: formatAiSpend(stats?.totalAiSpendUsd ?? 0),
       sublabel: `${stats?.totalAiCalls ?? 0} calls logged`,
+      to: "/database",
+      table: "ai_spend_log",
+    },
+    {
+      icon: Coins,
+      label: "AI Cost per Call",
+      value:
+        stats?.aiCostPerCallUsd === null || stats?.aiCostPerCallUsd === undefined
+          ? "—"
+          : formatAiSpend(stats.aiCostPerCallUsd),
+      sublabel: "Total AI spend ÷ calls logged",
       to: "/database",
       table: "ai_spend_log",
     },

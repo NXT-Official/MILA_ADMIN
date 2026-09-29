@@ -16,6 +16,8 @@ export const APP_PERMISSIONS = [
   "support.view",
   "support.manage",
   "subscriptionPlans.manage",
+  // Admin-only: switches the AI models behind styling and sets the revenue tax.
+  "aiSettings.manage",
 ] as const;
 export type AppPermission = (typeof APP_PERMISSIONS)[number];
 
@@ -43,6 +45,7 @@ export const STAFF_ROUTE_PERMISSIONS = {
   "/shop": "shop.view",
   "/members": "members.view",
   "/subscription-plans": "subscriptionPlans.manage",
+  "/ai-settings": "aiSettings.manage",
   "/moderation": "moderation.view",
   "/support": "support.view",
   // Every staff member can manage their own password — this is the suite's

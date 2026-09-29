@@ -22,6 +22,7 @@ import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
 import { Route as AuthedDatabaseRouteImport } from './routes/_authed/database'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
+import { Route as AuthedAiSettingsRouteImport } from './routes/_authed/ai-settings'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -87,11 +88,17 @@ const AuthedAnalyticsRoute = AuthedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedAiSettingsRoute = AuthedAiSettingsRouteImport.update({
+  id: '/ai-settings',
+  path: '/ai-settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/ai-settings': typeof AuthedAiSettingsRoute
   '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/database': typeof AuthedDatabaseRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/ai-settings': typeof AuthedAiSettingsRoute
   '/analytics': typeof AuthedAnalyticsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/database': typeof AuthedDatabaseRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_authed/ai-settings': typeof AuthedAiSettingsRoute
   '/_authed/analytics': typeof AuthedAnalyticsRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/database': typeof AuthedDatabaseRoute
@@ -138,6 +147,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/reset-password'
+    | '/ai-settings'
     | '/analytics'
     | '/dashboard'
     | '/database'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/reset-password'
+    | '/ai-settings'
     | '/analytics'
     | '/dashboard'
     | '/database'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/forgot-password'
     | '/reset-password'
+    | '/_authed/ai-settings'
     | '/_authed/analytics'
     | '/_authed/dashboard'
     | '/_authed/database'
@@ -278,10 +290,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAnalyticsRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/ai-settings': {
+      id: '/_authed/ai-settings'
+      path: '/ai-settings'
+      fullPath: '/ai-settings'
+      preLoaderRoute: typeof AuthedAiSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
 interface AuthedRouteChildren {
+  AuthedAiSettingsRoute: typeof AuthedAiSettingsRoute
   AuthedAnalyticsRoute: typeof AuthedAnalyticsRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedDatabaseRoute: typeof AuthedDatabaseRoute
@@ -294,6 +314,7 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedAiSettingsRoute: AuthedAiSettingsRoute,
   AuthedAnalyticsRoute: AuthedAnalyticsRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedDatabaseRoute: AuthedDatabaseRoute,

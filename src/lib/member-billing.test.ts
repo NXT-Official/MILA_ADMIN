@@ -1,14 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import {
+  MANUAL_PADDLE_CUSTOMER_ID,
+  MANUAL_SUBSCRIPTION_PREFIX,
   billingActionInputSchema,
   buildCancelBody,
   buildPlanChangeBody,
   buildRefundAdjustmentBody,
   describeBillingOutcome,
+  describePlanEnd,
+  describePlanGrant,
   describeRefundAdjustmentStatus,
+  endPlanInputSchema,
   grantCreditsInputSchema,
   hasRefundablePrice,
+  isManualSubscription,
   mirroredSubscriptionStatus,
+  newManualSubscriptionId,
+  planGrantInputSchema,
 } from "./member-billing";
 
 const USER_ID = "8f2f0d3a-2b1c-4f5e-9a7b-1c2d3e4f5a6b";
@@ -128,5 +136,56 @@ describe("reporting what happened", () => {
     expect(hasRefundablePrice("   ")).toBe(false);
     expect(hasRefundablePrice(null)).toBe(false);
     expect(hasRefundablePrice(undefined)).toBe(false);
+  });
+});
+
+describe("plans staff grant by hand", () => {
+  test("a granted plan is recognised by its synthetic id, a billed one is not", () => {
+    expect(isManualSubscription(`${MANUAL_SUBSCRIPTION_PREFIX}9c1f5b7e`)).toBe(true);
+    expect(isManualSubscription("sub_01h8x")).toBe(false);
+    expect(isManualSubscription("")).toBe(false);
+    expect(isManualSubscription(null)).toBe(false);
+    expect(isManualSubscription(undefined)).toBe(false);
+  });
+
+  test("a granted id is unique per grant and carries the prefix Paddle can never match", () => {
+    const id = newManualSubscriptionId(() => "fixed-uuid");
+    expect(id).toBe(`${MANUAL_SUBSCRIPTION_PREFIX}fixed-uuid`);
+    expect(newManualSubscriptionId()).not.toBe(newManualSubscriptionId());
+    expect(MANUAL_PADDLE_CUSTOMER_ID).toBe("manual");
+  });
+
+  test("granting needs a member and a plan; the note is optional", () => {
+    const parsed = planGrantInputSchema.parse({ user_id: USER_ID, plan_id: PLAN_ID });
+    expect(parsed.note).toBe("");
+    expect(planGrantInputSchema.safeParse({ user_id: USER_ID }).success).toBe(false);
+    expect(planGrantInputSchema.safeParse({ user_id: "nope", plan_id: PLAN_ID }).success).toBe(
+      false,
+    );
+    expect(
+      planGrantInputSchema.safeParse({ user_id: USER_ID, plan_id: PLAN_ID, note: "x".repeat(201) })
+        .success,
+    ).toBe(false);
+  });
+
+  test("ending a granted plan needs no plan id — it acts on the live one", () => {
+    const parsed = endPlanInputSchema.parse({
+      user_id: USER_ID,
+      note: "Trial over.",
+      plan_id: PLAN_ID,
+    });
+    expect(parsed).toEqual({ user_id: USER_ID, note: "Trial over." });
+  });
+
+  test("the grant message never implies a payment", () => {
+    expect(describePlanGrant({ planTitle: "Atelier", creditsIncluded: 5, replaced: false })).toBe(
+      "Atelier granted — 5 styling credits a day. No Paddle billing involved.",
+    );
+    expect(describePlanGrant({ planTitle: "Couture", creditsIncluded: 1, replaced: true })).toBe(
+      "Plan changed to Couture — 1 styling credit a day. No Paddle billing involved.",
+    );
+    expect(describePlanEnd("Atelier")).toBe(
+      "Atelier ended. The member is back to no plan and the free allowance.",
+    );
   });
 });

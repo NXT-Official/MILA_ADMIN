@@ -139,3 +139,67 @@ export function describeRefundAdjustmentStatus(status: string): string {
 export function hasRefundablePrice(paddlePriceId: string | null | undefined): boolean {
   return typeof paddlePriceId === "string" && paddlePriceId.trim().length > 0;
 }
+
+/**
+ * A plan the staff granted by hand, with no Paddle subscription behind it.
+ *
+ * Paddle is the system of record for anything billed, so a granted plan can't
+ * be a Paddle subscription — it is a local row whose synthetic ids carry this
+ * prefix. Nothing in Paddle can ever match them, the member app treats the row
+ * like any other in-force subscription (same daily credits, same community
+ * verification), and the console can tell the two apart to offer the right
+ * actions: Paddle actions for billed rows, local edit/end for granted ones.
+ */
+export const MANUAL_SUBSCRIPTION_PREFIX = "manual:";
+
+/** The customer id stored on a granted row — Paddle has no customer for it. */
+export const MANUAL_PADDLE_CUSTOMER_ID = "manual";
+
+export function isManualSubscription(paddleSubscriptionId: string | null | undefined): boolean {
+  return (
+    typeof paddleSubscriptionId === "string" &&
+    paddleSubscriptionId.startsWith(MANUAL_SUBSCRIPTION_PREFIX)
+  );
+}
+
+/** Unique synthetic Paddle id for a granted row (`paddle_subscription_id` is UNIQUE). */
+export function newManualSubscriptionId(uuid: () => string = () => crypto.randomUUID()): string {
+  return `${MANUAL_SUBSCRIPTION_PREFIX}${uuid()}`;
+}
+
+export const planGrantInputSchema = z.object({
+  user_id: z.string().uuid(),
+  plan_id: z.string().uuid(),
+  note: z
+    .string()
+    .trim()
+    .max(REFUND_REASON_MAX, `Keep the note under ${REFUND_REASON_MAX} characters.`)
+    .default(""),
+});
+
+export type PlanGrantInput = z.infer<typeof planGrantInputSchema>;
+
+export const endPlanInputSchema = planGrantInputSchema.pick({ user_id: true, note: true });
+
+export type EndPlanInput = z.infer<typeof endPlanInputSchema>;
+
+/**
+ * What the console says after granting a plan. The member is not billed, so the
+ * message never implies a payment — it names the plan and the daily allowance
+ * the member will see from their next request.
+ */
+export function describePlanGrant(options: {
+  planTitle: string;
+  creditsIncluded: number;
+  replaced: boolean;
+}): string {
+  const { planTitle, creditsIncluded, replaced } = options;
+  const credits = `${creditsIncluded} styling credit${creditsIncluded === 1 ? "" : "s"} a day`;
+  return replaced
+    ? `Plan changed to ${planTitle} — ${credits}. No Paddle billing involved.`
+    : `${planTitle} granted — ${credits}. No Paddle billing involved.`;
+}
+
+export function describePlanEnd(planTitle: string): string {
+  return `${planTitle} ended. The member is back to no plan and the free allowance.`;
+}

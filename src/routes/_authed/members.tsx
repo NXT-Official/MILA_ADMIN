@@ -22,7 +22,12 @@ import {
   adminSetSuspended,
   type AdminUserRow,
 } from "@/lib/admin.functions";
-import { adminGrantStylingCredits, adminRefundMemberPlan } from "@/lib/member-billing.functions";
+import {
+  adminEndMemberPlan,
+  adminGrantStylingCredits,
+  adminRefundMemberPlan,
+  adminSetMemberPlan,
+} from "@/lib/member-billing.functions";
 import { adminMembersQueryOptions } from "@/lib/queries/admin";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 import {
@@ -53,6 +58,8 @@ function MembersPage() {
   const [creditsTarget, setCreditsTarget] = useState<AdminUserRow | null>(null);
   const [creditsPending, setCreditsPending] = useState(false);
   const refundPlan = useServerFn(adminRefundMemberPlan);
+  const setPlan = useServerFn(adminSetMemberPlan);
+  const endPlan = useServerFn(adminEndMemberPlan);
   const grantCredits = useServerFn(adminGrantStylingCredits);
 
   const { data, isLoading } = useQuery(adminMembersQueryOptions());
@@ -131,15 +138,33 @@ function MembersPage() {
     const target = billingTarget;
     setBillingPending(true);
     try {
-      const result = await refundPlan({ data: { user_id: target.id, ...submission } });
-      toast.success(
-        result.message,
-        result.refund ? { description: result.refund.message } : undefined,
-      );
+      if (submission.kind === "grant") {
+        const result = await setPlan({
+          data: { user_id: target.id, plan_id: submission.plan_id, note: submission.note },
+        });
+        toast.success(result.message);
+      } else if (submission.kind === "end") {
+        const result = await endPlan({ data: { user_id: target.id, note: submission.note } });
+        toast.success(result.message);
+      } else {
+        const result = await refundPlan({
+          data: {
+            user_id: target.id,
+            plan_action: submission.plan_action,
+            target_plan_id: submission.target_plan_id,
+            refund: submission.refund,
+            reason: submission.reason,
+          },
+        });
+        toast.success(
+          result.message,
+          result.refund ? { description: result.refund.message } : undefined,
+        );
+        // A refund moves the numbers on /analytics.
+        qc.invalidateQueries({ queryKey: queryKeys.adminAnalytics });
+      }
       await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
       qc.invalidateQueries({ queryKey: queryKeys.adminMemberBilling(target.id) });
-      // A refund moves the numbers on /analytics.
-      qc.invalidateQueries({ queryKey: queryKeys.adminAnalytics });
       setBillingTarget(null);
     } catch (e) {
       toast.error(errorMessage(e, "Couldn't update this member's billing."));

@@ -113,6 +113,28 @@ for the next webhook.
 - Refund status is Paddle's own (`approved`, `pending_approval`, …) — the toast reports it rather
   than claiming the money has landed.
 
+### Granting a plan to a member who has none
+
+**Plan & billing** on a member with no live subscription offers a plan picker instead of the Paddle
+actions: choose an active plan and grant it. The grant is local by design — Paddle bills through
+checkout, so there is no subscription to create there — and it writes:
+
+- a `subscriptions` row with `status: "active"`, no period end, and synthetic ids
+  (`manual:<uuid>` for `paddle_subscription_id`, `manual` for the customer id). Nothing Paddle
+  sends can ever match them, so the webhook and the sync path never touch a granted plan.
+- the plan's `credits_included` into `user_entitlements.ai_credits` — the same write the webhook
+  makes on a renewal, so the member sees the allowance immediately rather than at the next reset.
+
+The member app needs no deploy: it resolves the plan from that row at request time, treats it as in
+force (daily credits, community verification) and shows it as "Granted — by the Mila team" with a
+notice instead of self-serve cancel/resume, because those call Paddle. Granting onto a member who
+already has a Paddle subscription is refused — two live rows would compete and the member app reads
+the newest one; use the Paddle actions for billed members.
+
+Granted plans can be changed or ended from the same dialog (no Paddle involved either way), and the
+console records `member.plan_assigned`, `member.plan_changed` or `member.plan_ended` with the plan,
+the credits and the note.
+
 ### Manual styling credits
 
 **Add styling credits** on a member's row grants credits through the member app's `grant_ai_credits`

@@ -4,12 +4,19 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin, recordStaffAction } from "@/lib/admin.functions";
 import {
   CONSOLE_IN_FORCE_STATUSES,
+  MANUAL_PADDLE_CUSTOMER_ID,
   billingActionInputSchema,
   buildCancelBody,
   buildPlanChangeBody,
+  describePlanEnd,
+  describePlanGrant,
   describeRefundAdjustmentStatus,
+  endPlanInputSchema,
   grantCreditsInputSchema,
   hasRefundablePrice,
+  isManualSubscription,
+  newManualSubscriptionId,
+  planGrantInputSchema,
   type PlanAction,
 } from "@/lib/member-billing";
 import {
@@ -62,6 +69,12 @@ export interface MemberBillingSummary {
   /** False when the Paddle keys aren't set on this deployment — refunds are then unavailable. */
   paddleConfigured: boolean;
   subscription: MemberBillingSubscription | null;
+  /**
+   * True when the live subscription is one staff granted by hand (no Paddle
+   * billing behind it). The console then offers local plan edits instead of
+   * Paddle refund/cancel actions.
+   */
+  manualPlan: boolean;
   credits: { aiCredits: number; purchasedCredits: number; total: number };
   plans: MemberBillingPlanOption[];
   latestTransaction: MemberLatestTransaction | null;
@@ -190,6 +203,7 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
     return {
       paddleConfigured,
       subscription,
+      manualPlan: isManualSubscription(currentSub?.paddle_subscription_id),
       credits: {
         aiCredits: entRes.data?.ai_credits ?? 0,
         purchasedCredits: entRes.data?.purchased_credits ?? 0,
@@ -237,6 +251,11 @@ export const adminRefundMemberPlan = createServerFn({ method: "POST" })
       .maybeSingle();
     if (subError) throw new Error(subError.message);
     if (!sub) throw new Error("This member has no live subscription to change.");
+    if (isManualSubscription(sub.paddle_subscription_id)) {
+      throw new Error(
+        "This plan was granted by staff and isn't billed through Paddle, so there is nothing to refund or cancel there. Use the grant form to change or end it.",
+      );
+    }
 
     let targetPlan: { id: string; title: string; paddle_price_id: string | null } | null = null;
     if (data.plan_action === "change") {
@@ -422,4 +441,189 @@ export const adminGrantStylingCredits = createServerFn({ method: "POST" })
     });
 
     return { ok: true, amount: data.amount, totalCredits: (totalCredits as number | null) ?? 0 };
+  });
+
+export interface MemberPlanGrantResult {
+  ok: true;
+  planTitle: string;
+  creditsIncluded: number;
+  /** True when an earlier staff grant was replaced instead of a new row created. */
+  replaced: boolean;
+  subscriptionId: string;
+  message: string;
+}
+
+/**
+ * Grant a plan by hand to a member who has none — or replace the one staff
+ * granted earlier.
+ *
+ * Paddle bills through checkout, so there is no Paddle subscription to create
+ * here: the row is local, with the same shape and statuses the member app
+ * already reads, `manual:` ids Paddle can never match, and the plan's daily
+ * credits written exactly the way the webhook writes them on a renewal. The
+ * member app needs no deploy to see it — it resolves the plan from this row at
+ * request time.
+ */
+export const adminSetMemberPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => planGrantInputSchema.parse(input))
+  .handler(async ({ data, context }): Promise<MemberPlanGrantResult> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: profile, error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .eq("id", data.user_id)
+      .maybeSingle();
+    if (profileError) throw new Error(profileError.message);
+    if (!profile) throw new Error("That account no longer exists.");
+
+    const { data: plan, error: planError } = await supabaseAdmin
+      .from("subscription_plans")
+      .select("id,title,credits_included,archived_at,is_active")
+      .eq("id", data.plan_id)
+      .maybeSingle();
+    if (planError) throw new Error(planError.message);
+    if (!plan || plan.archived_at || !plan.is_active)
+      throw new Error("That plan is no longer available.");
+
+    const { data: sub, error: subError } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id,plan_id,paddle_subscription_id")
+      .eq("user_id", data.user_id)
+      .in("status", [...CONSOLE_IN_FORCE_STATUSES])
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (subError) throw new Error(subError.message);
+
+    // A billed subscription owns the member's plan slot: granting on top would
+    // leave two live rows and the member app reads the newest one.
+    if (sub && !isManualSubscription(sub.paddle_subscription_id)) {
+      throw new Error(
+        "This member already has a Paddle subscription. Cancel or switch it from the Paddle actions instead of granting a plan on top.",
+      );
+    }
+    if (sub && sub.plan_id === plan.id) throw new Error("This member is already on that plan.");
+
+    const subscriptionId = sub?.paddle_subscription_id ?? newManualSubscriptionId();
+    if (sub) {
+      const { error } = await supabaseAdmin
+        .from("subscriptions")
+        .update({ plan_id: plan.id, status: "active", cancel_at_period_end: false })
+        .eq("id", sub.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabaseAdmin.from("subscriptions").insert({
+        user_id: data.user_id,
+        plan_id: plan.id,
+        paddle_subscription_id: subscriptionId,
+        paddle_customer_id: MANUAL_PADDLE_CUSTOMER_ID,
+        status: "active",
+        current_period_end: null,
+        cancel_at_period_end: false,
+      });
+      if (error) throw new Error(error.message);
+    }
+
+    // The write the Paddle webhook makes on a renewal, so the member sees the
+    // plan's daily credits immediately instead of waiting for the next reset.
+    const { error: entitlementError } = await supabaseAdmin
+      .from("user_entitlements")
+      .update({ ai_credits: plan.credits_included })
+      .eq("user_id", data.user_id);
+    if (entitlementError) {
+      console.error("[member-billing] plan granted but entitlements not synced", entitlementError);
+      throw new Error(
+        `The plan was granted, but the member's credit balance didn't update: ${entitlementError.message}`,
+      );
+    }
+
+    await recordStaffAction(
+      context.userId,
+      sub ? "member.plan_changed" : "member.plan_assigned",
+      "member",
+      data.user_id,
+      {
+        plan_id: plan.id,
+        plan_title: plan.title,
+        credits_included: plan.credits_included,
+        source: "manual",
+        subscription_id: subscriptionId,
+        replaced_plan_id: sub?.plan_id ?? null,
+        note: data.note,
+      },
+    );
+
+    return {
+      ok: true,
+      planTitle: plan.title,
+      creditsIncluded: plan.credits_included,
+      replaced: !!sub,
+      subscriptionId,
+      message: describePlanGrant({
+        planTitle: plan.title,
+        creditsIncluded: plan.credits_included,
+        replaced: !!sub,
+      }),
+    };
+  });
+
+export interface MemberPlanEndResult {
+  ok: true;
+  planTitle: string;
+  message: string;
+}
+
+/**
+ * End a plan staff granted. There is nothing to tell Paddle: the row stops
+ * counting as in force, so the member drops back to the free allowance — the
+ * same end state a Paddle cancel reaches, reached locally.
+ */
+export const adminEndMemberPlan = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((input: unknown) => endPlanInputSchema.parse(input))
+  .handler(async ({ data, context }): Promise<MemberPlanEndResult> => {
+    await assertAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: sub, error: subError } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id,plan_id,paddle_subscription_id")
+      .eq("user_id", data.user_id)
+      .in("status", [...CONSOLE_IN_FORCE_STATUSES])
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (subError) throw new Error(subError.message);
+    if (!sub) throw new Error("This member has no live plan to end.");
+    if (!isManualSubscription(sub.paddle_subscription_id)) {
+      throw new Error(
+        "This subscription is billed through Paddle — cancel it from the Paddle actions so the member is handled there too.",
+      );
+    }
+
+    const { data: plan } = await supabaseAdmin
+      .from("subscription_plans")
+      .select("title")
+      .eq("id", sub.plan_id)
+      .maybeSingle();
+    const planTitle = plan?.title ?? "The granted plan";
+
+    const { error } = await supabaseAdmin
+      .from("subscriptions")
+      .update({ status: "canceled", cancel_at_period_end: false })
+      .eq("id", sub.id);
+    if (error) throw new Error(error.message);
+
+    await recordStaffAction(context.userId, "member.plan_ended", "member", data.user_id, {
+      plan_id: sub.plan_id,
+      plan_title: plan?.title ?? null,
+      subscription_id: sub.paddle_subscription_id,
+      source: "manual",
+      note: data.note,
+    });
+
+    return { ok: true, planTitle, message: describePlanEnd(planTitle) };
   });

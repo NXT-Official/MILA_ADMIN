@@ -142,6 +142,7 @@ describe("reporting what happened", () => {
 describe("plans staff grant by hand", () => {
   test("a granted plan is recognised by its synthetic id, a billed one is not", () => {
     expect(isManualSubscription(`${MANUAL_SUBSCRIPTION_PREFIX}9c1f5b7e`)).toBe(true);
+    expect(isManualSubscription("manual_comp_b0f0a34a-a32c-4b3c-95d5-5c6a81fe39ea")).toBe(true);
     expect(isManualSubscription("sub_01h8x")).toBe(false);
     expect(isManualSubscription("")).toBe(false);
     expect(isManualSubscription(null)).toBe(false);

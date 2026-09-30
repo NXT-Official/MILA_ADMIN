@@ -156,10 +156,10 @@ export const MANUAL_SUBSCRIPTION_PREFIX = "manual:";
 export const MANUAL_PADDLE_CUSTOMER_ID = "manual";
 
 export function isManualSubscription(paddleSubscriptionId: string | null | undefined): boolean {
-  return (
-    typeof paddleSubscriptionId === "string" &&
-    paddleSubscriptionId.startsWith(MANUAL_SUBSCRIPTION_PREFIX)
-  );
+  // Every granted row starts with `manual` — the console's `manual:<uuid>` and
+  // rows created by hand in the database (`manual_comp_…`). Paddle's own ids
+  // start with `sub_`, so nothing billed can match.
+  return typeof paddleSubscriptionId === "string" && paddleSubscriptionId.startsWith("manual");
 }
 
 /** Unique synthetic Paddle id for a granted row (`paddle_subscription_id` is UNIQUE). */

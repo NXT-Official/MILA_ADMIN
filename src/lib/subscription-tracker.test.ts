@@ -274,6 +274,9 @@ describe("tracker formatting", () => {
 
   test("dates are short and stable, and an absent date is a dash", () => {
     expect(formatTrackerDate("2026-09-30T09:15:00.000Z")).toBe("30 Sep 2026");
+    // Pinned: the CI runner's ICU renders en-GB September as "Sept", which is
+    // why this is formatted by hand instead of through Intl.
+    expect(formatTrackerDate("2026-09-01T00:00:00.000Z")).toBe("01 Sep 2026");
     expect(formatTrackerDate(null)).toBe("—");
     expect(formatTrackerDate("not a date")).toBe("—");
   });

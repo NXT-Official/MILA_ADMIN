@@ -252,24 +252,27 @@ export function summarizeTracker(rows: readonly SubscriptionTrackerRow[]) {
 export function formatTrackerAmount(amountCents: number | null, currency: string | null): string {
   if (amountCents === null) return "—";
   const code = (currency ?? "USD").toUpperCase();
-  try {
-    return new Intl.NumberFormat("en-US", { style: "currency", currency: code })
-      .format(amountCents / 100)
-      .replace(/\u00a0/g, " ");
-  } catch {
-    return `${(amountCents / 100).toFixed(2)} ${code}`;
-  }
+  const symbol = CURRENCY_SYMBOLS[code];
+  const amount = (amountCents / 100).toFixed(2);
+  return symbol ? `${symbol}${amount}` : `${amount} ${code}`;
 }
 
+/** The same symbols the member app's receipt uses, so both read alike. */
+const CURRENCY_SYMBOLS: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", JPY: "¥" };
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/**
+ * "30 Sep 2026" — spelled out rather than through `Intl`, whose short month
+ * names differ by ICU version (the CI runner writes "Sept"), and always in UTC
+ * so one payment shows the same day wherever a steward opens the console.
+ */
 export function formatTrackerDate(value: string | null): string {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(date);
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  return `${day} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
 }
 
 const STATUS_LABELS: Record<string, string> = {

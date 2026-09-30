@@ -7,6 +7,14 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/database": { title: "Database", subtitle: "Read-only view of every table" },
   "/shop": { title: "Shop", subtitle: "Catalogue items & their links" },
   "/members": { title: "Members", subtitle: "Manage accounts & stewardship" },
+  "/subscriptions": {
+    title: "Subscriptions",
+    subtitle: "Who paid what, when it expires, and both receipts",
+  },
+  "/announcements": {
+    title: "Announcements",
+    subtitle: "Email every member about a Mila update",
+  },
   "/subscription-plans": {
     title: "Subscription Plans",
     subtitle: "Manage the membership plan catalog",

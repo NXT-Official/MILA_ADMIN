@@ -22,6 +22,8 @@ test("a moderator is shut out of every admin-only screen", () => {
     "/database",
     "/shop",
     "/members",
+    "/subscriptions",
+    "/announcements",
     "/subscription-plans",
     "/ai-settings",
   ] as const;

@@ -18,6 +18,8 @@ import {
   toShopFilterInput,
   type ShopFilterState,
 } from "@/lib/shop.functions";
+import { adminListSubscriptions } from "@/lib/subscription-tracker.functions";
+import { adminAnnouncementAudience } from "@/lib/announcements.functions";
 
 export function staffGateQueryOptions() {
   return queryOptions({
@@ -80,6 +82,20 @@ export function adminMemberBillingQueryOptions(userId: string | undefined) {
     queryKey: queryKeys.adminMemberBilling(userId),
     queryFn: () => adminGetMemberBilling({ data: { user_id: userId ?? "" } }),
     enabled: !!userId,
+  });
+}
+
+export function adminSubscriptionsQueryOptions() {
+  return queryOptions({
+    queryKey: queryKeys.adminSubscriptions,
+    queryFn: () => adminListSubscriptions(),
+  });
+}
+
+export function adminAnnouncementAudienceQueryOptions() {
+  return queryOptions({
+    queryKey: queryKeys.adminAnnouncementAudience,
+    queryFn: () => adminAnnouncementAudience(),
   });
 }
 

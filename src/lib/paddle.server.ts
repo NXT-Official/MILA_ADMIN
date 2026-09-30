@@ -185,6 +185,45 @@ export async function listCompletedSubscriptionTransactions(
   return data;
 }
 
+export interface PaddleTransactionSummary extends PaddleTransactionLike {
+  subscription_id?: string | null;
+  customer_id?: string | null;
+  invoice_number?: string | null;
+  billed_at?: string | null;
+  custom_data?: { user_id?: string } | null;
+  items?: { price?: { description?: string | null } | null }[] | null;
+}
+
+/**
+ * Completed payments across the whole account, newest first — what the
+ * subscriptions tracker shows as "paid". `maxPages` bounds the call: the
+ * tracker reports `truncated` rather than pretending it saw everything.
+ */
+export async function listCompletedTransactions(
+  perPage = 30,
+  maxPages = 4,
+): Promise<{ data: PaddleTransactionSummary[]; truncated: boolean }> {
+  const { data, truncated } = await paddleListAll<PaddleTransactionSummary>(
+    "/transactions",
+    { status: "completed", order_by: "created_at[DESC]", per_page: perPage },
+    maxPages,
+  );
+  return { data, truncated };
+}
+
+/**
+ * Paddle's own PDF invoice for a transaction, as a short-lived download link
+ * (the URL is signed and expires). Staff open it directly from the tracker.
+ */
+export async function getTransactionInvoiceUrl(transactionId: string): Promise<string> {
+  const result = await paddleRequest<{ data?: { url?: string } }>(
+    `/transactions/${encodeURIComponent(transactionId)}/invoice`,
+  );
+  const url = result.data?.url;
+  if (!url) throw new PaddleRequestError("Paddle returned no invoice link for that payment.");
+  return url;
+}
+
 export interface PaddleRefundAdjustment {
   id: string;
   status: string;

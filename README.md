@@ -24,6 +24,8 @@ names the one permission that opens it:
 | `/database`           | `database.view`            |   ✓   |     —     | Read-only viewer for every table                  |
 | `/shop`               | `shop.view`                |   ✓   |     —     | Catalogue items, links and brands                 |
 | `/members`            | `members.view`             |   ✓   |     —     | Grant/revoke roles, suspend, create, edit, delete |
+| `/subscriptions`      | `subscriptions.view`       |   ✓   |     —     | Who paid what, when it expires, both PDFs         |
+| `/announcements`      | `announcements.send`       |   ✓   |     —     | Email every member about a Mila update            |
 | `/subscription-plans` | `subscriptionPlans.manage` |   ✓   |     —     | Membership plan catalog                           |
 | `/ai-settings`        | `aiSettings.manage`        |   ✓   |     —     | Styling models, revenue tax, AI cost per call     |
 | `/moderation`         | `moderation.view`          |   ✓   |     ✓     | Hide / restore / delete feed posts                |
@@ -134,6 +136,42 @@ the newest one; use the Paddle actions for billed members.
 Granted plans can be changed or ended from the same dialog (no Paddle involved either way), and the
 console records `member.plan_assigned`, `member.plan_changed` or `member.plan_ended` with the plan,
 the credits and the note.
+
+### Subscriptions and receipts (`/subscriptions`)
+
+One row per membership, **named** — the console exists so staff can see people, so nothing a steward
+reads is a uuid:
+
+| Column            | Comes from                                                        |
+| ----------------- | ----------------------------------------------------------------- |
+| Member            | `profiles.full_name` / `username` + the email from `auth.users`   |
+| Plan              | `subscription_plans.title` (granted rows read "Granted plan")     |
+| Status            | the local mirror, labelled with `cancel_at_period_end` and expiry |
+| Started / Expires | `subscriptions.created_at` / `current_period_end`                 |
+| Paid              | the newest completed Paddle transaction for that subscription     |
+| Invoice / Receipt | two buttons: Paddle's own PDF invoice, and Mila's receipt         |
+
+`src/lib/subscription-tracker.ts` holds the merge rules (pure, tested) and
+`subscription-tracker.functions.ts` the two reads. Amounts and invoice numbers come from Paddle
+live; the receipt path comes from the member app's `purchases` ledger, which records every
+completed payment and stores the receipt PDF it generated in the private `receipts` bucket. The two
+sources are merged per transaction id, so a payment recorded by both shows one row.
+
+Paddle is never required for the screen to work: without keys, or when Paddle is unreachable, the
+rows still render from the local mirror with a banner saying why amounts are missing. Invoice
+buttons call `GET /transactions/{id}/invoice` on demand (Paddle's link is signed and expires);
+receipt buttons mint a 10-minute signed URL for the stored PDF. A membership with no payment — a
+granted plan — shows no amounts and disables both buttons rather than pretending.
+
+### Announcements (`/announcements`)
+
+Emails every member about a Mila update from Mila's noreply address. Staff write a subject and a
+message (blank lines separate paragraphs), see the plain-text version members will get, and confirm
+before sending. `src/lib/announcements.functions.ts` walks `auth.users` for recipients, skips
+suspended accounts, sends in small concurrent batches, and records `announcement.sent` with the
+counts. One run is capped at 500 recipients so a mistake stays bounded, and the result panel reports
+delivered / failed / skipped rather than a bare "sent". Without `RESEND_API_KEY` the whole thing is
+an honest dry run — it reports that nothing was delivered.
 
 ### Manual styling credits
 

@@ -16,6 +16,10 @@ export const APP_PERMISSIONS = [
   "support.view",
   "support.manage",
   "subscriptionPlans.manage",
+  // Who paid what, when, and the two PDFs for it.
+  "subscriptions.view",
+  // Emails every member about a Mila update.
+  "announcements.send",
   // Admin-only: switches the AI models behind styling and sets the revenue tax.
   "aiSettings.manage",
 ] as const;
@@ -44,6 +48,8 @@ export const STAFF_ROUTE_PERMISSIONS = {
   "/database": "database.view",
   "/shop": "shop.view",
   "/members": "members.view",
+  "/subscriptions": "subscriptions.view",
+  "/announcements": "announcements.send",
   "/subscription-plans": "subscriptionPlans.manage",
   "/ai-settings": "aiSettings.manage",
   "/moderation": "moderation.view",

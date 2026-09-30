@@ -22,6 +22,8 @@ test("every staff screen re-checks its own permission in its route file", () => 
     "/database": "database.tsx",
     "/shop": "shop.tsx",
     "/members": "members.tsx",
+    "/subscriptions": "subscriptions.tsx",
+    "/announcements": "announcements.tsx",
     "/subscription-plans": "subscription-plans.tsx",
     "/ai-settings": "ai-settings.tsx",
     "/moderation": "moderation.tsx",

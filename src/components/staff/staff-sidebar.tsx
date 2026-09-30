@@ -12,6 +12,8 @@ import {
   Cpu,
   LogOut,
   Loader2,
+  ReceiptText,
+  Megaphone,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,7 +38,9 @@ const STAFF_LINKS: StaffNavItem[] = [
   { to: "/database", label: "Database", icon: Database },
   { to: "/shop", label: "Shop", icon: ShoppingBag },
   { to: "/members", label: "Members", icon: Users },
+  { to: "/subscriptions", label: "Subscriptions", icon: ReceiptText },
   { to: "/subscription-plans", label: "Plans", icon: CreditCard },
+  { to: "/announcements", label: "Announcements", icon: Megaphone },
   { to: "/ai-settings", label: "AI Settings", icon: Cpu },
   { to: "/moderation", label: "Moderation", icon: ShieldAlert },
   { to: "/support", label: "Support", icon: LifeBuoy },

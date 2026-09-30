@@ -215,8 +215,11 @@ export function buildTrackerRows(input: TrackerInput): SubscriptionTrackerRow[] 
       subscriptionId: subscription.id,
       memberId: subscription.user_id,
       memberName:
-        firstNonBlank(profile?.full_name, profile?.username, input.emails.get(subscription.user_id)) ??
-        "Unnamed member",
+        firstNonBlank(
+          profile?.full_name,
+          profile?.username,
+          input.emails.get(subscription.user_id),
+        ) ?? "Unnamed member",
       memberEmail: input.emails.get(subscription.user_id) ?? null,
       planTitle:
         (subscription.plan_id ? plans.get(subscription.plan_id) : null) ??

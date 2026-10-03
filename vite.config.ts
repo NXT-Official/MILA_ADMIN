@@ -57,6 +57,44 @@ export default defineConfig(({ command, mode }) => {
   return {
     // 8080 is the member app; both have to run side by side in dev.
     server: { host: "::", port: 8081 },
+    // The entry chunk crossed vite's 500 kB warning by carrying every vendor
+    // library (react-dom, framer-motion, …). Routes are already split by the
+    // router plugin — split the vendors out of the entry so the app shell and
+    // the vendor bundles cache independently. Scoped to the client build;
+    // SSR/nitro keep their default chunking.
+    environments: {
+      client: {
+        build: {
+          rollupOptions: {
+            output: {
+              // Match whole packages (react-dom/client, scheduler, motion-dom…),
+              // not just their entry modules — the object form only moved the
+              // main specifiers (a 3.66 kB vendor chunk) and left the rest in
+              // the entry.
+              manualChunks(id: string) {
+                if (!id.includes("node_modules")) return;
+                if (
+                  id.includes("node_modules/react-dom") ||
+                  id.includes("node_modules/scheduler") ||
+                  /node_modules\/react\//.test(id)
+                ) {
+                  return "vendor-react";
+                }
+                if (
+                  id.includes("framer-motion") ||
+                  id.includes("node_modules/motion-dom") ||
+                  id.includes("node_modules/motion-utils")
+                ) {
+                  return "vendor-motion";
+                }
+                if (id.includes("node_modules/@tanstack")) return "vendor-tanstack";
+                if (id.includes("node_modules/@supabase")) return "vendor-supabase";
+              },
+            },
+          },
+        },
+      },
+    },
     css: { transformer: "lightningcss" as const },
     resolve: {
       alias: { "@": `${process.cwd()}/src` },

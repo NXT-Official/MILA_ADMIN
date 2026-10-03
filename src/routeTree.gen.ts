@@ -9,26 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AuthedSupportRouteImport } from './routes/_authed/support'
-import { Route as AuthedSubscriptionsRouteImport } from './routes/_authed/subscriptions'
-import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/subscription-plans'
-import { Route as AuthedShopRouteImport } from './routes/_authed/shop'
-import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
-import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
-import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
-import { Route as AuthedDatabaseRouteImport } from './routes/_authed/database'
-import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
-import { Route as AuthedAnnouncementsRouteImport } from './routes/_authed/announcements'
-import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
+import { Route as AuthedRouteImport } from './routes/_authed'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthedAiSettingsRouteImport } from './routes/_authed/ai-settings'
+import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
+import { Route as AuthedAnnouncementsRouteImport } from './routes/_authed/announcements'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedDatabaseRouteImport } from './routes/_authed/database'
+import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
+import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
+import { Route as AuthedShopRouteImport } from './routes/_authed/shop'
+import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/subscription-plans'
+import { Route as AuthedSubscriptionsRouteImport } from './routes/_authed/subscriptions'
+import { Route as AuthedSupportRouteImport } from './routes/_authed/support'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -36,63 +40,14 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthedRoute = AuthedRouteImport.update({
-  id: '/_authed',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthedSupportRoute = AuthedSupportRouteImport.update({
-  id: '/support',
-  path: '/support',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedSubscriptionsRoute = AuthedSubscriptionsRouteImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedSubscriptionPlansRoute = AuthedSubscriptionPlansRouteImport.update({
-  id: '/subscription-plans',
-  path: '/subscription-plans',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedShopRoute = AuthedShopRouteImport.update({
-  id: '/shop',
-  path: '/shop',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedModerationRoute = AuthedModerationRouteImport.update({
-  id: '/moderation',
-  path: '/moderation',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedMembersRoute = AuthedMembersRouteImport.update({
-  id: '/members',
-  path: '/members',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedDatabaseRoute = AuthedDatabaseRouteImport.update({
-  id: '/database',
-  path: '/database',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => AuthedRoute,
-} as any)
-const AuthedAnnouncementsRoute = AuthedAnnouncementsRouteImport.update({
-  id: '/announcements',
-  path: '/announcements',
+const AuthedAiSettingsRoute = AuthedAiSettingsRouteImport.update({
+  id: '/ai-settings',
+  path: '/ai-settings',
   getParentRoute: () => AuthedRoute,
 } as any)
 const AuthedAnalyticsRoute = AuthedAnalyticsRouteImport.update({
@@ -100,9 +55,54 @@ const AuthedAnalyticsRoute = AuthedAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedAiSettingsRoute = AuthedAiSettingsRouteImport.update({
-  id: '/ai-settings',
-  path: '/ai-settings',
+const AuthedAnnouncementsRoute = AuthedAnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedDatabaseRoute = AuthedDatabaseRouteImport.update({
+  id: '/database',
+  path: '/database',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedMembersRoute = AuthedMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedModerationRoute = AuthedModerationRouteImport.update({
+  id: '/moderation',
+  path: '/moderation',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedShopRoute = AuthedShopRouteImport.update({
+  id: '/shop',
+  path: '/shop',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSubscriptionPlansRoute = AuthedSubscriptionPlansRouteImport.update({
+  id: '/subscription-plans',
+  path: '/subscription-plans',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSubscriptionsRoute = AuthedSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSupportRoute = AuthedSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => AuthedRoute,
 } as any)
 
@@ -223,18 +223,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed': {
@@ -244,81 +237,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authed/support': {
-      id: '/_authed/support'
-      path: '/support'
-      fullPath: '/support'
-      preLoaderRoute: typeof AuthedSupportRouteImport
-      parentRoute: typeof AuthedRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authed/subscriptions': {
-      id: '/_authed/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/subscriptions'
-      preLoaderRoute: typeof AuthedSubscriptionsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/subscription-plans': {
-      id: '/_authed/subscription-plans'
-      path: '/subscription-plans'
-      fullPath: '/subscription-plans'
-      preLoaderRoute: typeof AuthedSubscriptionPlansRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/shop': {
-      id: '/_authed/shop'
-      path: '/shop'
-      fullPath: '/shop'
-      preLoaderRoute: typeof AuthedShopRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/settings': {
-      id: '/_authed/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof AuthedSettingsRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/moderation': {
-      id: '/_authed/moderation'
-      path: '/moderation'
-      fullPath: '/moderation'
-      preLoaderRoute: typeof AuthedModerationRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/members': {
-      id: '/_authed/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof AuthedMembersRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/database': {
-      id: '/_authed/database'
-      path: '/database'
-      fullPath: '/database'
-      preLoaderRoute: typeof AuthedDatabaseRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/dashboard': {
-      id: '/_authed/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthedDashboardRouteImport
-      parentRoute: typeof AuthedRoute
-    }
-    '/_authed/announcements': {
-      id: '/_authed/announcements'
-      path: '/announcements'
-      fullPath: '/announcements'
-      preLoaderRoute: typeof AuthedAnnouncementsRouteImport
+    '/_authed/ai-settings': {
+      id: '/_authed/ai-settings'
+      path: '/ai-settings'
+      fullPath: '/ai-settings'
+      preLoaderRoute: typeof AuthedAiSettingsRouteImport
       parentRoute: typeof AuthedRoute
     }
     '/_authed/analytics': {
@@ -328,11 +265,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedAnalyticsRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/ai-settings': {
-      id: '/_authed/ai-settings'
-      path: '/ai-settings'
-      fullPath: '/ai-settings'
-      preLoaderRoute: typeof AuthedAiSettingsRouteImport
+    '/_authed/announcements': {
+      id: '/_authed/announcements'
+      path: '/announcements'
+      fullPath: '/announcements'
+      preLoaderRoute: typeof AuthedAnnouncementsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/database': {
+      id: '/_authed/database'
+      path: '/database'
+      fullPath: '/database'
+      preLoaderRoute: typeof AuthedDatabaseRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/members': {
+      id: '/_authed/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof AuthedMembersRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/moderation': {
+      id: '/_authed/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof AuthedModerationRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/shop': {
+      id: '/_authed/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof AuthedShopRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/subscription-plans': {
+      id: '/_authed/subscription-plans'
+      path: '/subscription-plans'
+      fullPath: '/subscription-plans'
+      preLoaderRoute: typeof AuthedSubscriptionPlansRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/subscriptions': {
+      id: '/_authed/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/subscriptions'
+      preLoaderRoute: typeof AuthedSubscriptionsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/support': {
+      id: '/_authed/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof AuthedSupportRouteImport
       parentRoute: typeof AuthedRoute
     }
   }

@@ -156,6 +156,22 @@ function ShopPage() {
           </SelectContent>
         </Select>
         <Select
+          value={filters.attire || ALL}
+          onValueChange={(value) => update({ attire: value === ALL ? "" : value })}
+        >
+          <SelectTrigger className="w-52" aria-label="Filter by attire">
+            <SelectValue placeholder="All attire" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>All attire</SelectItem>
+            {(options?.attire ?? []).map((attire) => (
+              <SelectItem key={attire} value={attire}>
+                {attire}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
           value={filters.brand_id || ALL}
           onValueChange={(value) => update({ brand_id: value === ALL ? "" : value })}
         >

@@ -391,6 +391,7 @@ export type Database = {
           price: number;
           rating: number | null;
           seasonal_palettes: string[];
+          attire: string[];
           shipping_info: string | null;
           title: string;
           units_sold: number | null;
@@ -414,6 +415,7 @@ export type Database = {
           price?: number;
           rating?: number | null;
           seasonal_palettes?: string[];
+          attire?: string[];
           shipping_info?: string | null;
           title: string;
           units_sold?: number | null;
@@ -437,6 +439,7 @@ export type Database = {
           price?: number;
           rating?: number | null;
           seasonal_palettes?: string[];
+          attire?: string[];
           shipping_info?: string | null;
           title?: string;
           units_sold?: number | null;

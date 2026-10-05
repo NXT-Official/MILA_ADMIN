@@ -127,6 +127,9 @@ export function ShopItemDialog({
                 <Fact label="Seasonal palettes">
                   <List values={item.seasonal_palettes} />
                 </Fact>
+                <Fact label="Attire">
+                  <List values={item.attire} />
+                </Fact>
               </dl>
             </div>
 

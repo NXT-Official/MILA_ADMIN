@@ -31,6 +31,7 @@ const sampleItem: ShopItem = {
   available_regions: ["US", "AE"],
   body_shapes: ["hourglass"],
   seasonal_palettes: ["warm-autumn"],
+  attire: ["Evening", "Smart Casual"],
   description: "Bias-cut silk dress.",
   date_added: "2026-09-01T09:00:00Z",
   brand_id: "0b0b0b0b-1b1b-4b1b-8b1b-2b2b2b2b2b2b",
@@ -67,12 +68,14 @@ test("empty filter strings mean 'no filter' on the wire", () => {
   expect(toShopFilterInput(EMPTY_SHOP_FILTERS)).toEqual({
     search: undefined,
     category: undefined,
+    attire: undefined,
     gender: undefined,
     brand_id: undefined,
     stock: "all",
   });
   expect(shopFiltersActive(EMPTY_SHOP_FILTERS)).toBe(false);
   expect(shopFiltersActive({ ...EMPTY_SHOP_FILTERS, gender: "Female" })).toBe(true);
+  expect(shopFiltersActive({ ...EMPTY_SHOP_FILTERS, attire: "Business Professional" })).toBe(true);
   expect(shopFiltersActive({ ...EMPTY_SHOP_FILTERS, stock: "out" })).toBe(true);
 });
 

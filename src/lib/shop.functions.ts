@@ -50,6 +50,8 @@ export interface ShopItem {
   available_regions: string[];
   body_shapes: string[];
   seasonal_palettes: string[];
+  /** Attire register(s) — values like "Business Professional". */
+  attire: string[];
   description: string | null;
   date_added: string;
   brand_id: string;
@@ -82,6 +84,7 @@ function toShopItem(row: ShopQueryRow): ShopItem {
     available_regions: row.available_regions,
     body_shapes: row.body_shapes,
     seasonal_palettes: row.seasonal_palettes,
+    attire: row.attire,
     description: row.description,
     date_added: row.date_added,
     brand_id: row.brand_id,
@@ -102,6 +105,7 @@ function toShopItem(row: ShopQueryRow): ShopItem {
 const ShopFilterInput = z.object({
   search: z.string().trim().max(100).optional(),
   category: z.string().trim().max(60).optional(),
+  attire: z.string().trim().max(60).optional(),
   gender: z.string().trim().max(30).optional(),
   brand_id: z.string().uuid().optional(),
   stock: z.enum(["all", "in", "out"]).default("all"),
@@ -121,6 +125,7 @@ async function fetchShopItems(filters: ShopFilters, range?: { from: number; to: 
     query = query.or(`title.ilike.%${term}%,description.ilike.%${term}%,category.ilike.%${term}%`);
   }
   if (filters.category) query = query.eq("category", filters.category);
+  if (filters.attire) query = query.contains("attire", [filters.attire]);
   if (filters.gender) query = query.eq("gender", filters.gender);
   if (filters.brand_id) query = query.eq("brand_id", filters.brand_id);
   if (filters.stock === "in") query = query.eq("in_stock", true);
@@ -176,6 +181,7 @@ export const adminExportShopItems = createServerFn({ method: "GET" })
 
 export interface ShopOptions {
   categories: string[];
+  attire: string[];
   genders: string[];
   brands: { id: string; name: string; status: string; is_verified_seller: boolean }[];
 }
@@ -184,6 +190,7 @@ export interface ShopOptions {
 export interface ShopFilterState {
   search: string;
   category: string;
+  attire: string;
   gender: string;
   brand_id: string;
   stock: "all" | "in" | "out";
@@ -192,6 +199,7 @@ export interface ShopFilterState {
 export const EMPTY_SHOP_FILTERS: ShopFilterState = {
   search: "",
   category: "",
+  attire: "",
   gender: "",
   brand_id: "",
   stock: "all",
@@ -201,6 +209,7 @@ export function toShopFilterInput(filters: ShopFilterState): ShopFilters {
   return {
     search: filters.search || undefined,
     category: filters.category || undefined,
+    attire: filters.attire || undefined,
     gender: filters.gender || undefined,
     brand_id: filters.brand_id || undefined,
     stock: filters.stock,
@@ -211,6 +220,7 @@ export function shopFiltersActive(filters: ShopFilterState): boolean {
   return Boolean(
     filters.search ||
     filters.category ||
+    filters.attire ||
     filters.gender ||
     filters.brand_id ||
     filters.stock !== "all",
@@ -252,6 +262,7 @@ export const SHOP_CSV_COLUMNS: CsvColumn<ShopItem>[] = [
     label: "Seasonal palettes",
     value: (item) => item.seasonal_palettes.join(", "),
   },
+  { key: "attire", label: "Attire", value: (item) => item.attire.join(", ") },
   { key: "verified_at", label: "Last verified", value: (item) => item.last_verified_at },
 ];
 
@@ -263,7 +274,7 @@ export const adminShopOptions = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [productsRes, brandsRes] = await Promise.all([
-      supabaseAdmin.from("products").select("category,gender").limit(1000),
+      supabaseAdmin.from("products").select("category,gender,attire").limit(1000),
       supabaseAdmin.from("brands").select("id,name,status,is_verified_seller").order("name"),
     ]);
     if (productsRes.error || brandsRes.error) {
@@ -272,6 +283,7 @@ export const adminShopOptions = createServerFn({ method: "GET" })
     }
 
     const categories = [...new Set((productsRes.data ?? []).map((row) => row.category))].sort();
+    const attire = [...new Set((productsRes.data ?? []).flatMap((row) => row.attire ?? []))].sort();
     const genders = [...new Set((productsRes.data ?? []).map((row) => row.gender))].sort();
-    return { categories, genders, brands: brandsRes.data ?? [] };
+    return { categories, attire, genders, brands: brandsRes.data ?? [] };
   });

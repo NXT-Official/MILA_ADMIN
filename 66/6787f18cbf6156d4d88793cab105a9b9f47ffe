@@ -1,0 +1,32 @@
+src/hooks/use-login-redirect.ts
+  s_755964b2e0c3da::t_1bda7af8e0ffbe 35,41
+  s_755964b2e0c3da::t_e0c1bf5423dbfe 7-8,15-18,20
+  s_755964b2e0c3da::t_0b300a006ba7cd 25-27
+src/lib/safe-redirect.test.ts
+  s_755964b2e0c3da::t_9265a075ae9cfe 1-130,134-147
+  s_755964b2e0c3da::t_1ec69784fe6d33 131-133
+src/lib/safe-redirect.ts
+  s_755964b2e0c3da::t_855d41947eb5b4 1-66
+src/routes/_authed.tsx
+  s_755964b2e0c3da::t_011971ba4e3159 6-27,34,36,40
+src/lib/security-boundaries.test.ts
+  s_755964b2e0c3da::t_f4e960c757af32 11-15
+src/routes/index.tsx
+  s_755964b2e0c3da::t_6114b155565e1c 7-8,13-19,24,26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "666787f18cbf6156d4d88793cab105a9b9f47ffe",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

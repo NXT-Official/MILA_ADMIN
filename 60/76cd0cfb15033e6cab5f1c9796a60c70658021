@@ -1,0 +1,45 @@
+src/lib/credit-grant.ts
+  s_755964b2e0c3da::t_ab7a5f7f7ef9d0 1-44
+  s_755964b2e0c3da::t_dddc85125c9154 45
+src/lib/member-billing.functions.ts
+  s_755964b2e0c3da::t_997e4d7f4a18fa 140,149,151-158
+  s_755964b2e0c3da::t_02eb65cbeb4c22 217-229,235-237
+  s_755964b2e0c3da::t_e7f9e72a360a67 436-439,441,447-450,452,454,459-465,467,476-479,481-498,500-503
+  s_755964b2e0c3da::t_dd3a2a83c7af1b 32-37
+  s_755964b2e0c3da::t_7bf12bfd77cb36 418-419
+  s_755964b2e0c3da::t_e65bc293676e77 125
+  s_755964b2e0c3da::t_bcbd45b28e2593 601
+  s_755964b2e0c3da::t_5e7e909150f096 84
+  s_755964b2e0c3da::t_6c1cecdb0a1527 504-505,594,597-598,603-604
+src/lib/credit-grant.test.ts
+  s_755964b2e0c3da::t_d31ac4ec4a4e10 1-142
+  s_755964b2e0c3da::t_d4b416fdc4833a 143-148
+src/lib/credit-balance.test.ts
+  s_755964b2e0c3da::t_da5802774b4df9 1-186
+  s_755964b2e0c3da::t_89eaa6bd5884a5 187-190
+src/lib/admin.functions.ts
+  s_755964b2e0c3da::t_644e646c4c061d 15-21
+  s_755964b2e0c3da::t_8f308bcc11fd9b 114-120,124-130
+  s_755964b2e0c3da::t_b895e9ae203456 91,96,98-103
+src/routes/_authed/members.tsx
+  s_755964b2e0c3da::t_4df50a56fe7d3a 186
+src/lib/credit-balance.ts
+  s_755964b2e0c3da::t_6633033dacade2 1-92
+  s_755964b2e0c3da::t_dc552b6406c3bf 93-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6076cd0cfb15033e6cab5f1c9796a60c70658021",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

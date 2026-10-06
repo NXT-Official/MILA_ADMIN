@@ -25,6 +25,11 @@ function buildCsp(supabaseUrl: string | undefined): string {
       ...(supabaseOrigin ? [supabaseOrigin] : []),
       "https://hcaptcha.com",
       "https://*.hcaptcha.com",
+      // Sentry — error monitoring. The client SDK posts event envelopes to
+      // the ingest host; without these the CSP silently drops them. Update
+      // if the org ever moves regions.
+      "https://*.ingest.sentry.io",
+      "https://*.sentry.io",
     ],
     "frame-src": ["https://hcaptcha.com", "https://*.hcaptcha.com"],
     "object-src": ["'none'"],

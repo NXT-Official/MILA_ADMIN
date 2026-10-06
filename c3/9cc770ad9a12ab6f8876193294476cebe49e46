@@ -1,0 +1,21 @@
+package.json
+  s_755964b2e0c3da::t_32b028a1b36687 80-81
+bun.lock
+  s_755964b2e0c3da::t_47e95d27de764b 70,1070,1210-1211,1216-1225
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c39cc770ad9a12ab6f8876193294476cebe49e46",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "unknown"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

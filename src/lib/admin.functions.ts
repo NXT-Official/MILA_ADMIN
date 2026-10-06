@@ -11,6 +11,7 @@ import {
   type AppRole,
 } from "@/lib/authorization";
 import { z } from "zod";
+import { createMemberInputSchema, parseInput, updateMemberInputSchema } from "@/lib/staff-input";
 
 type MilaSupabaseClient = SupabaseClient<Database>;
 
@@ -152,11 +153,17 @@ const SetSuspendedInput = z.object({
   suspended: z.boolean(),
 });
 
+/** Staff can reinstate themselves, but never suspend their own account. */
+export function assertCanSetSuspended(actorId: string, targetId: string, suspended: boolean) {
+  if (suspended && actorId === targetId) throw new Error("You can't suspend your own account.");
+}
+
 export const adminSetSuspended = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((input: unknown) => SetSuspendedInput.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
+    assertCanSetSuspended(context.userId, data.user_id, data.suspended);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.rpc("set_user_suspended", {
       _actor_user_id: context.userId,
@@ -173,23 +180,9 @@ export const adminSetSuspended = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const usernameSchema = z
-  .string()
-  .trim()
-  .min(3)
-  .max(30)
-  .regex(/^[a-zA-Z0-9_-]+$/, "3-30 letters, numbers, - or _ only.");
-
-const CreateMemberInput = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-  full_name: z.string().trim().max(100).optional(),
-  username: usernameSchema.optional(),
-});
-
 export const adminCreateMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => CreateMemberInput.parse(input))
+  .validator((input: unknown) => parseInput(createMemberInputSchema, input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -209,15 +202,9 @@ export const adminCreateMember = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-const UpdateMemberInput = z.object({
-  user_id: z.string().uuid(),
-  full_name: z.string().trim().max(100).optional(),
-  username: usernameSchema.optional().or(z.literal("")),
-});
-
 export const adminUpdateMember = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => UpdateMemberInput.parse(input))
+  .validator((input: unknown) => parseInput(updateMemberInputSchema, input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -392,12 +379,12 @@ export const adminListPosts = createServerFn({ method: "GET" })
 const HidePostInput = z.object({
   post_id: z.string().uuid(),
   hidden: z.boolean(),
-  reason: z.string().max(280).optional().nullable(),
+  reason: z.string().max(280, "Keep the reason under 280 characters.").optional().nullable(),
 });
 
 export const adminHidePost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) => HidePostInput.parse(input))
+  .validator((input: unknown) => parseInput(HidePostInput, input))
   .handler(async ({ data, context }) => {
     await assertPermission(context.supabase, context.userId, "moderation.manage");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

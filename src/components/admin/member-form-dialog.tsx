@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/ui/form-field";
 import { adminCreateMember, adminUpdateMember, type AdminUserRow } from "@/lib/admin.functions";
+import { createMemberInputSchema, fieldMessages, updateMemberInputSchema } from "@/lib/staff-input";
 import { errorMessage } from "@/lib/utils";
 
 interface MemberFormDialogProps {
@@ -32,6 +33,7 @@ export function MemberFormDialog({ open, onOpenChange, member, onSaved }: Member
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -39,26 +41,37 @@ export function MemberFormDialog({ open, onOpenChange, member, onSaved }: Member
     setPassword("");
     setFullName(member?.full_name ?? "");
     setUsername(member?.username ?? "");
+    setErrors({});
   }, [open, member]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // The same rules the server applies, so a bad username is explained under
+    // the field instead of after a round trip.
+    const checked = isEdit
+      ? updateMemberInputSchema.safeParse({
+          user_id: member.id,
+          full_name: fullName.trim(),
+          username: username.trim(),
+        })
+      : createMemberInputSchema.safeParse({
+          email: email.trim(),
+          password,
+          full_name: fullName.trim() || undefined,
+          username: username.trim() || undefined,
+        });
+    if (!checked.success) {
+      setErrors(fieldMessages(checked.error));
+      return;
+    }
+    setErrors({});
     setSubmitting(true);
     try {
       if (isEdit) {
-        await updateMember({
-          data: { user_id: member.id, full_name: fullName.trim(), username: username.trim() },
-        });
+        await updateMember({ data: checked.data });
         toast.success("Member updated.");
       } else {
-        await createMember({
-          data: {
-            email: email.trim(),
-            password,
-            full_name: fullName.trim() || undefined,
-            username: username.trim() || undefined,
-          },
-        });
+        await createMember({ data: checked.data });
         toast.success("Member created.");
       }
       onOpenChange(false);
@@ -85,7 +98,7 @@ export function MemberFormDialog({ open, onOpenChange, member, onSaved }: Member
         <form onSubmit={handleSubmit} className="space-y-3">
           {!isEdit && (
             <>
-              <FormField label="Email Address" htmlFor="member-email" required>
+              <FormField label="Email Address" htmlFor="member-email" error={errors.email} required>
                 <Input
                   id="member-email"
                   type="email"
@@ -94,7 +107,12 @@ export function MemberFormDialog({ open, onOpenChange, member, onSaved }: Member
                   required
                 />
               </FormField>
-              <FormField label="Password" htmlFor="member-password" required>
+              <FormField
+                label="Password"
+                htmlFor="member-password"
+                error={errors.password}
+                required
+              >
                 <Input
                   id="member-password"
                   type="password"
@@ -106,14 +124,14 @@ export function MemberFormDialog({ open, onOpenChange, member, onSaved }: Member
               </FormField>
             </>
           )}
-          <FormField label="Full Name" htmlFor="member-full-name">
+          <FormField label="Full Name" htmlFor="member-full-name" error={errors.full_name}>
             <Input
               id="member-full-name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
           </FormField>
-          <FormField label="Username" htmlFor="member-username">
+          <FormField label="Username" htmlFor="member-username" error={errors.username}>
             <Input
               id="member-username"
               value={username}

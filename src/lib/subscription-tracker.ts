@@ -239,10 +239,22 @@ export function buildTrackerRows(input: TrackerInput): SubscriptionTrackerRow[] 
   });
 }
 
+/** Statuses in which a membership is still in force for the member. */
+const IN_FORCE_STATUSES: ReadonlySet<string> = new Set(["active", "trialing", "past_due"]);
+
+/**
+ * A staff-granted plan is "Granted" only while it is in force. Once it is
+ * canceled or lapses it is an ended membership like any other, so the row says
+ * so instead of still claiming a grant that no longer gives anything.
+ */
+function isGrantedInForce(row: SubscriptionTrackerRow): boolean {
+  return row.isManual && IN_FORCE_STATUSES.has(row.status);
+}
+
 export function summarizeTracker(rows: readonly SubscriptionTrackerRow[]) {
   return {
     total: rows.length,
-    granted: rows.filter((row) => row.isManual).length,
+    granted: rows.filter(isGrantedInForce).length,
     withReceipt: rows.filter((row) => row.payment?.receiptPath).length,
     withInvoice: rows.filter((row) => row.payment?.invoiceNumber).length,
     paidWithoutReceipt: rows.filter((row) => row.payment && !row.payment.receiptPath).length,
@@ -284,7 +296,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function trackerStatusLabel(row: SubscriptionTrackerRow): string {
-  if (row.isManual) return "Granted";
+  if (isGrantedInForce(row)) return "Granted";
   const label = STATUS_LABELS[row.status] ?? row.status;
   return row.cancelAtPeriodEnd && row.status === "active" ? `${label} — ends` : label;
 }
@@ -292,7 +304,7 @@ export function trackerStatusLabel(row: SubscriptionTrackerRow): string {
 export type TrackerTone = "live" | "granted" | "ended" | "attention";
 
 export function trackerStatusTone(row: SubscriptionTrackerRow): TrackerTone {
-  if (row.isManual) return "granted";
+  if (isGrantedInForce(row)) return "granted";
   if (row.status === "active" || row.status === "trialing") {
     return row.cancelAtPeriodEnd ? "ended" : "live";
   }

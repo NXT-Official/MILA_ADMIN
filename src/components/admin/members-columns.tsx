@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ActionItem, RowActionsMenu, ToggleCell } from "@/components/admin/table-cells";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import type { AdminUserRow } from "@/lib/admin.functions";
+import { confirmSuspend } from "@/lib/staff-prompts";
 
 interface MembersColumnsOptions {
   currentUserId?: string;
@@ -114,7 +115,16 @@ export function getMembersColumns({
           <ActionItem
             icon={row.original.suspended ? UserCheck : UserX}
             label={row.original.suspended ? "Reinstate" : "Suspend"}
-            onClick={() => onToggleSuspended(row.original.id, !row.original.suspended)}
+            disabled={row.original.id === currentUserId && !row.original.suspended}
+            description={
+              row.original.id === currentUserId && !row.original.suspended
+                ? "You can't suspend your own account."
+                : undefined
+            }
+            onClick={() => {
+              if (!row.original.suspended && !confirmSuspend(memberLabel(row.original))) return;
+              onToggleSuspended(row.original.id, !row.original.suspended);
+            }}
           />
           {row.original.id !== currentUserId && (
             <ActionItem

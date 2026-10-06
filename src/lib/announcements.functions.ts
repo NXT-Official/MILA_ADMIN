@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertPermission, recordStaffAction } from "@/lib/admin.functions";
+import { announcementInputSchema, parseInput } from "@/lib/staff-input";
 import { announcementEmail } from "@/lib/announcement-email";
 import { isMailConfigured, mailer, mailerFrom } from "@/lib/mailer";
 
@@ -96,17 +96,7 @@ export interface AnnouncementResult {
  */
 export const adminSendAnnouncement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((input: unknown) =>
-    z
-      .object({
-        subject: z.string().trim().min(3, "Give the update a subject.").max(120),
-        body: z.string().trim().min(10, "Write what changed.").max(8000),
-        confirm: z.literal(true, {
-          errorMap: () => ({ message: "Confirm that this emails every member." }),
-        }),
-      })
-      .parse(input),
-  )
+  .validator((input: unknown) => parseInput(announcementInputSchema, input))
   .handler(async ({ data, context }): Promise<AnnouncementResult> => {
     await assertPermission(context.supabase, context.userId, "announcements.send");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

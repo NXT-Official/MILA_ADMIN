@@ -11,6 +11,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { adminAnnouncementAudienceQueryOptions } from "@/lib/queries/admin";
 import { adminSendAnnouncement, type AnnouncementResult } from "@/lib/announcements.functions";
 import { announcementParagraphs } from "@/lib/announcement-email";
+import {
+  announcementBodySchema,
+  announcementSubjectSchema,
+  firstIssueMessage,
+} from "@/lib/staff-input";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 import { errorMessage } from "@/lib/utils";
 
@@ -30,7 +35,10 @@ function AnnouncementsPage() {
   const [result, setResult] = useState<AnnouncementResult | null>(null);
 
   const paragraphs = announcementParagraphs(body);
-  const ready = subject.trim().length >= 3 && paragraphs.length > 0 && confirmed;
+  // The server's own rules, so the button stays off until the update would be accepted.
+  const subjectCheck = announcementSubjectSchema.safeParse(subject);
+  const bodyCheck = announcementBodySchema.safeParse(body);
+  const ready = subjectCheck.success && bodyCheck.success && confirmed;
 
   async function handleSend() {
     if (!ready) return;
@@ -78,6 +86,9 @@ function AnnouncementsPage() {
               placeholder="What's new at Mila"
               onChange={(event) => setSubject(event.target.value)}
             />
+            {!subjectCheck.success && subject.trim().length > 0 && (
+              <p className="mt-1.5 text-xs text-stone">{firstIssueMessage(subjectCheck.error)}</p>
+            )}
           </div>
 
           <div>
@@ -96,6 +107,9 @@ function AnnouncementsPage() {
               {paragraphs.length} paragraph{paragraphs.length === 1 ? "" : "s"} ·{" "}
               {body.trim().length} characters
             </p>
+            {!bodyCheck.success && body.trim().length > 0 && (
+              <p className="mt-1.5 text-xs text-stone">{firstIssueMessage(bodyCheck.error)}</p>
+            )}
           </div>
 
           <label className="flex items-start gap-2.5 text-xs text-stone">

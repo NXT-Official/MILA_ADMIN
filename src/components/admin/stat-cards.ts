@@ -24,7 +24,7 @@ import type { AdminDashboardStats } from "@/lib/admin.functions";
 import type { AdminAnalyticsSummary } from "@/lib/analytics.functions";
 import type { BrowsableTable } from "@/lib/database.functions";
 import type { StaffRoute } from "@/lib/authorization";
-import { formatPrice } from "@/lib/utils";
+import { formatPlanPrice } from "@/lib/subscription-plans";
 import { describeTaxSetting } from "@/lib/revenue";
 
 /**
@@ -64,8 +64,8 @@ export function analyticsCards(stats: AdminAnalyticsSummary | undefined): StatCa
     {
       icon: DollarSign,
       label: "MRR (estimate)",
-      value: formatPrice(stats?.mrr ?? 0, stats?.mrrCurrency ?? "USD"),
-      sublabel: "Monthly + yearly plans normalized",
+      value: formatPlanPrice(stats?.mrrCents ?? 0, stats?.mrrCurrency ?? "USD"),
+      sublabel: "Billed plans only, yearly plans ÷ 12",
       to: "/database",
       table: "subscriptions",
     },

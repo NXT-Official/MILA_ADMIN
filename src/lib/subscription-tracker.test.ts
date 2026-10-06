@@ -258,9 +258,63 @@ describe("buildTrackerRows", () => {
     expect(trackerStatusTone(row)).toBe("granted");
   });
 
+  test("a granted plan only reads as Granted while it is in force", () => {
+    const grantedRow = (status: string, cancelAtPeriodEnd = false) =>
+      buildTrackerRows(
+        input({
+          subscriptions: [
+            {
+              ...SUBSCRIPTION,
+              status,
+              cancel_at_period_end: cancelAtPeriodEnd,
+              paddle_subscription_id: "manual:6f1c2d1e-0000-4000-8000-000000000000",
+            },
+          ],
+        }),
+      )[0];
+
+    for (const status of ["active", "trialing", "past_due"]) {
+      const row = grantedRow(status);
+      expect(trackerStatusLabel(row)).toBe("Granted");
+      expect(trackerStatusTone(row)).toBe("granted");
+    }
+    expect(trackerStatusLabel(grantedRow("active", true))).toBe("Granted");
+
+    // Once staff end it (or it lapses) the row says what happened, like any other.
+    const ended = grantedRow("canceled");
+    expect(ended.isManual).toBe(true);
+    expect(trackerStatusLabel(ended)).toBe("Canceled");
+    expect(trackerStatusTone(ended)).toBe("ended");
+    expect(trackerStatusLabel(grantedRow("paused"))).toBe("Paused");
+    expect(trackerStatusTone(grantedRow("paused"))).toBe("ended");
+  });
+
   test("an unknown plan id is named as unknown rather than shown as a uuid", () => {
     const [row] = buildTrackerRows(input({ plans: [] }));
     expect(row.planTitle).toBe("Unknown plan");
+  });
+});
+
+describe("summarizeTracker", () => {
+  test("the granted-by-staff count leaves out granted plans that have ended", () => {
+    const granted = (id: string, status: string) => ({
+      ...SUBSCRIPTION,
+      id,
+      status,
+      paddle_subscription_id: `manual:${id}`,
+    });
+    const rows = buildTrackerRows(
+      input({
+        subscriptions: [
+          granted("g-active", "active"),
+          granted("g-trial", "trialing"),
+          granted("g-late", "past_due"),
+          granted("g-ended", "canceled"),
+          { ...SUBSCRIPTION, id: "paid-canceled", status: "canceled" },
+        ],
+      }),
+    );
+    expect(summarizeTracker(rows)).toMatchObject({ total: 5, granted: 3 });
   });
 });
 

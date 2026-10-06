@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
+import { assertCanSetSuspended } from "./admin.functions";
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -51,4 +52,23 @@ test("the members list flags accounts that have acted as staff", () => {
   const fn = source("./admin.functions.ts");
   expect(fn).toContain("has_staff_activity");
   expect(fn).toContain('from("staff_audit_log").select("actor_user_id")');
+});
+
+test("staff cannot suspend their own account, in the console or on the server", () => {
+  const actor = "11111111-1111-4111-8111-111111111111";
+  const other = "22222222-2222-4222-8222-222222222222";
+  expect(() => assertCanSetSuspended(actor, actor, true)).toThrow(
+    "You can't suspend your own account.",
+  );
+  // Suspending someone else, and reinstating yourself, stay allowed.
+  expect(() => assertCanSetSuspended(actor, other, true)).not.toThrow();
+  expect(() => assertCanSetSuspended(other, other, false)).not.toThrow();
+  expect(() => assertCanSetSuspended(actor, other, false)).not.toThrow();
+
+  // The guard has to run before the suspend RPC writes anything.
+  const fn = source("./admin.functions.ts");
+  const guard = fn.indexOf("assertCanSetSuspended(context.userId, data.user_id, data.suspended)");
+  const write = fn.indexOf('rpc("set_user_suspended"');
+  expect(guard).toBeGreaterThan(-1);
+  expect(write).toBeGreaterThan(guard);
 });

@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test";
 import { analyticsCards, dashboardCards } from "../components/admin/stat-cards";
+import type { AdminAnalyticsSummary } from "./analytics.functions";
 import { STAFF_ROUTES } from "./authorization";
 import {
   BROWSABLE_TABLES,
@@ -27,7 +28,7 @@ test("every analytics and dashboard card opens something", () => {
 test("cards read their values from the stats they are handed", () => {
   const [first] = analyticsCards({
     activeSubscriptions: 7,
-    mrr: 42,
+    mrrCents: 4_200,
     mrrCurrency: "USD",
     revenue: {
       available: true,
@@ -64,7 +65,7 @@ test("cards read their values from the stats they are handed", () => {
   // per-call figure is the total spend over the calls that could be priced.
   const cards = analyticsCards({
     activeSubscriptions: 0,
-    mrr: 0,
+    mrrCents: 0,
     mrrCurrency: "USD",
     revenue: {
       available: true,
@@ -104,7 +105,7 @@ test("cards read their values from the stats they are handed", () => {
 
   const [noSpendYet] = analyticsCards({
     activeSubscriptions: 0,
-    mrr: 0,
+    mrrCents: 0,
     mrrCurrency: "USD",
     revenue: {
       available: false,
@@ -155,7 +156,7 @@ test("cards read their values from the stats they are handed", () => {
 test("the catalogue count opens the shop inventory from both screens", () => {
   const analyticsCatalogue = analyticsCards({
     activeSubscriptions: 0,
-    mrr: 0,
+    mrrCents: 0,
     mrrCurrency: "USD",
     revenue: {
       available: false,
@@ -221,4 +222,51 @@ test("a search term cannot break out of the PostgREST or-filter grammar", () => 
   expect(sanitizeSearch("  mila  ")).toBe("mila");
   expect(sanitizeSearch(',()\\*"')).toBe("");
   expect(sanitizeSearch("%")).toBe("%");
+});
+
+const quietStats: AdminAnalyticsSummary = {
+  activeSubscriptions: 0,
+  mrrCents: 0,
+  mrrCurrency: "usd",
+  revenue: {
+    available: false,
+    note: null,
+    currency: "USD",
+    grossCents: 0,
+    taxCents: 0,
+    netCents: 0,
+    taxKind: "percent",
+    taxValue: 0,
+    transactionCount: 0,
+    mixedCurrencies: false,
+    truncated: false,
+  },
+  totalOutfits: 0,
+  totalConciergeConversations: 0,
+  totalConciergeMessages: 0,
+  totalSavedPalettes: 0,
+  totalProducts: 0,
+  totalBrands: 0,
+  totalPostItems: 0,
+  activeRateLimitBuckets: 0,
+  totalAiCalls: 0,
+  totalAiSpendUsd: 0,
+  totalAiTokens: 0,
+  aiCostPerCallUsd: null,
+  totalAnalyticsEventsLast30d: 0,
+  analyticsEventsBySource: { web: 0, mobile: 0 },
+  topAnalyticsEvents: [],
+};
+
+const mrrCardValue = (mrrCents: number | undefined) =>
+  analyticsCards(mrrCents === undefined ? undefined : { ...quietStats, mrrCents }).find(
+    (card) => card.label === "MRR (estimate)",
+  )?.value;
+
+test("the MRR card shows dollars, not the cents the plans are stored in", () => {
+  // One $49.99 member used to read as "$5,000": plan prices are cents.
+  expect(mrrCardValue(4_999)).toBe("$49.99");
+  expect(mrrCardValue(120_000)).toBe("$1,200.00");
+  expect(mrrCardValue(0)).toBe("$0.00");
+  expect(mrrCardValue(undefined)).toBe("$0.00");
 });

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin.functions";
+import { computeMrr } from "@/lib/mrr";
 import { describePaddleError, isPaddleConfigured, paddleListAll } from "@/lib/paddle.server";
 import {
   collectCompletedRevenue,
@@ -35,7 +36,8 @@ export interface AdminRevenueSummary {
 
 export interface AdminAnalyticsSummary {
   activeSubscriptions: number;
-  mrr: number;
+  /** Monthly recurring revenue from billed plans, in cents. Granted plans earn nothing. */
+  mrrCents: number;
   mrrCurrency: string;
   revenue: AdminRevenueSummary;
   totalOutfits: number;
@@ -79,7 +81,7 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin
         .from("subscriptions")
-        .select("plan_id", { count: "exact" })
+        .select("plan_id,paddle_subscription_id", { count: "exact" })
         .eq("status", "active"),
       supabaseAdmin.from("outfits").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("concierge_conversations").select("*", { count: "exact", head: true }),
@@ -112,17 +114,11 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
           .select("id,price_amount,currency,billing_interval")
           .in("id", planIds)
       : { data: [] };
-    const planById = new Map((plansRes.data ?? []).map((p) => [p.id, p]));
 
-    let mrr = 0;
-    let mrrCurrency = "USD";
-    for (const sub of activeSubs.data ?? []) {
-      const plan = planById.get(sub.plan_id);
-      if (!plan) continue;
-      mrrCurrency = plan.currency;
-      if (plan.billing_interval === "monthly") mrr += plan.price_amount;
-      else if (plan.billing_interval === "yearly") mrr += plan.price_amount / 12;
-    }
+    const { cents: mrrCents, currency: mrrCurrency } = computeMrr(
+      activeSubs.data ?? [],
+      plansRes.data ?? [],
+    );
 
     const revenue = await loadRevenueSummary(platformSettingsRes.data);
 
@@ -143,7 +139,7 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
 
     return {
       activeSubscriptions: activeSubs.count ?? 0,
-      mrr,
+      mrrCents,
       mrrCurrency,
       revenue,
       totalOutfits: outfitsCount.count ?? 0,

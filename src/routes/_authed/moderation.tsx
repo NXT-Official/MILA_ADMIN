@@ -11,6 +11,7 @@ import { adminHidePost, adminDeletePost } from "@/lib/admin.functions";
 import { adminModerationQueryOptions } from "@/lib/queries/admin";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
+import { askHideReason } from "@/lib/staff-prompts";
 import { errorMessage } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authed/moderation")({
@@ -27,8 +28,10 @@ function ModerationPage() {
   const { data, isLoading } = useQuery(adminModerationQueryOptions());
 
   async function toggleHidden(id: string, hidden: boolean) {
+    // Cancel on the reason prompt means "never mind", not "hide it with no reason".
+    const reason = hidden ? askHideReason() : null;
+    if (hidden && reason === null) return;
     try {
-      const reason = hidden ? (window.prompt("Reason for hiding (optional):") ?? null) : null;
       await hide({ data: { post_id: id, hidden, reason } });
       toast.success(hidden ? "Post hidden from feed." : "Post restored.");
       qc.invalidateQueries({ queryKey: queryKeys.adminPosts });

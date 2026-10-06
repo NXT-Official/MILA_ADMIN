@@ -21,7 +21,26 @@ export async function recordGrantAudit(
   }
 }
 
-/** Plain sentences for what the `grant_ai_credits` ledger can refuse with. */
+/**
+ * The lookups that run before the ledger call fail before anything is written,
+ * so staff can be told it is safe to try again.
+ */
+export const GRANT_LOOKUP_FAILED_MESSAGE =
+  "Couldn't read this member's plan. Nothing was changed — please try again.";
+
+/**
+ * An error from the ledger call we can't read — a dropped connection or a lost
+ * response can arrive after the grant has committed, so this must never promise
+ * that nothing changed or invite a blind retry.
+ */
+export const GRANT_UNCONFIRMED_MESSAGE =
+  "Couldn't confirm the credits were added. Check the member's balance before trying again.";
+
+/**
+ * Plain sentences for what the `grant_ai_credits` ledger refuses with. Those
+ * refusals are raised before the ledger writes anything; every other error is
+ * ambiguous about whether the grant landed.
+ */
 export function describeGrantCreditsError(message: string): string {
   if (message.includes("entitlements_not_found")) return "This member has no credit record yet.";
   if (message.includes("invalid_amount"))
@@ -29,7 +48,7 @@ export function describeGrantCreditsError(message: string): string {
   if (message.includes("invalid_daily_allowance")) {
     return "This member's plan has an invalid daily allowance. Check it on the Plans screen.";
   }
-  return "Couldn't add credits. Nothing was changed — please try again.";
+  return GRANT_UNCONFIRMED_MESSAGE;
 }
 
 /**

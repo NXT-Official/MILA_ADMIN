@@ -190,6 +190,10 @@ function MembersPage() {
       setCreditsTarget(null);
     } catch (e) {
       toast.error(errorMessage(e, "Couldn't add credits."));
+      // A lost response can follow a grant that landed — refresh so the balance
+      // staff see is the real one before they decide to try again.
+      await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      qc.invalidateQueries({ queryKey: queryKeys.adminMemberBilling(target.id) });
     } finally {
       setCreditsPending(false);
     }

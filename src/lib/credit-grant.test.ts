@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import {
   CREDIT_AUDIT_WARNING,
+  GRANT_LOOKUP_FAILED_MESSAGE,
+  GRANT_UNCONFIRMED_MESSAGE,
   assertEntitlementSynced,
   describeGrantCreditsError,
   recordGrantAudit,
@@ -64,8 +66,25 @@ describe("describeGrantCreditsError", () => {
     const message = describeGrantCreditsError(
       'relation "user_entitlements" does not exist (42P01)',
     );
-    expect(message).toBe("Couldn't add credits. Nothing was changed — please try again.");
+    expect(message).toBe(GRANT_UNCONFIRMED_MESSAGE);
     expect(message).not.toContain("42P01");
+  });
+
+  test("an unreadable ledger error never promises nothing changed — the grant may have committed", () => {
+    for (const raw of ["fetch failed", "", "connection terminated unexpectedly", "timeout"]) {
+      const message = describeGrantCreditsError(raw);
+      expect(message).toBe(
+        "Couldn't confirm the credits were added. Check the member's balance before trying again.",
+      );
+      expect(message).not.toContain("Nothing was changed");
+    }
+  });
+
+  test("only the lookups that run before any write say nothing was changed", () => {
+    expect(GRANT_LOOKUP_FAILED_MESSAGE).toBe(
+      "Couldn't read this member's plan. Nothing was changed — please try again.",
+    );
+    expect(GRANT_UNCONFIRMED_MESSAGE).not.toContain("Nothing was changed");
   });
 });
 
@@ -107,6 +126,15 @@ describe("billing server functions are wired to the helpers", () => {
     expect(grant).not.toContain("throw new Error(error.message)");
   });
 
+  test("the pre-write lookups say nothing changed, the ledger call never does", () => {
+    const rpc = grant.indexOf('.rpc("grant_ai_credits"');
+    const lookups = grant.slice(0, rpc);
+    const afterRpc = grant.slice(rpc);
+    expect(lookups.split("GRANT_LOOKUP_FAILED_MESSAGE").length - 1).toBe(2);
+    expect(grant).not.toContain("Nothing was changed");
+    expect(afterRpc).not.toContain("GRANT_LOOKUP_FAILED_MESSAGE");
+  });
+
   test("the grant resolves the allowance with the member app's live-subscription rule", () => {
     expect(grant).toContain("current_period_end");
     expect(grant).toContain("cancel_at_period_end");
@@ -139,10 +167,42 @@ describe("billing server functions are wired to the helpers", () => {
   });
 });
 
-describe("the members page shows the audit warning quietly", () => {
-  test("a grant with a warning still reads as success and carries the note", () => {
-    const page = source("../routes/_authed/members.tsx");
-    expect(page).toContain("result.warning");
-    expect(page).toContain("setCreditsTarget(null)");
+describe("the members page", () => {
+  const page = source("../routes/_authed/members.tsx");
+  const submit = page.slice(
+    page.indexOf("async function submitCredits"),
+    page.indexOf("const columns = getMembersColumns"),
+  );
+  const [tryBlock, catchBlock] = submit.split("} catch (e) {");
+
+  test("shows the audit warning quietly under the success toast", () => {
+    expect(tryBlock).toContain("result.warning");
+    expect(tryBlock).toContain("setCreditsTarget(null)");
+  });
+
+  test("refreshes the list and the billing data after a failed grant too, so a landed grant shows", () => {
+    expect(catchBlock).toBeDefined();
+    expect(catchBlock).toContain("queryKeys.adminUsers");
+    expect(catchBlock).toContain("queryKeys.adminMemberBilling(target.id)");
+    // The dialog stays open on an error so the staff member reads the message.
+    expect(catchBlock).not.toContain("setCreditsTarget(null)");
+  });
+});
+
+describe("recordStaffAction", () => {
+  const fn = source("./admin.functions.ts");
+  const record = fn.slice(fn.indexOf("export const recordStaffAction"));
+  const insertFailed = record.slice(
+    record.indexOf("if (error)"),
+    record.indexOf("export const getStaffAuthorization"),
+  );
+
+  test("keeps the database cause in the server log, never in the text staff read", () => {
+    expect(insertFailed).toContain("console.error(");
+    expect(insertFailed).toContain("error.message");
+    expect(insertFailed).toContain(
+      'throw new Error("The action succeeded, but its audit record could not be saved.")',
+    );
+    expect(insertFailed.indexOf("console.error(")).toBeLessThan(insertFailed.indexOf("throw new"));
   });
 });

@@ -637,7 +637,16 @@ export const recordStaffAction = createServerOnlyFn(async function recordStaffAc
     target_id: targetId,
     metadata,
   });
-  if (error) throw new Error("The action succeeded, but its audit record could not be saved.");
+  if (error) {
+    // The cause stays in the server log; staff only read the plain sentence.
+    console.error("[staff-audit] audit record not saved", {
+      action,
+      target_type: targetType,
+      target_id: targetId,
+      error: error.message,
+    });
+    throw new Error("The action succeeded, but its audit record could not be saved.");
+  }
 });
 
 export const getStaffAuthorization = createServerFn({ method: "GET" })

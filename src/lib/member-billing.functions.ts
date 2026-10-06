@@ -31,6 +31,7 @@ import {
 } from "@/lib/paddle.server";
 import { effectiveDailyCredits, liveDailyAllowance, utcDay } from "@/lib/credit-balance";
 import {
+  GRANT_LOOKUP_FAILED_MESSAGE,
   assertEntitlementSynced,
   describeGrantCreditsError,
   recordGrantAudit,
@@ -446,7 +447,7 @@ export const adminGrantStylingCredits = createServerFn({ method: "POST" })
       .maybeSingle();
     if (subError) {
       console.error("[member-billing] subscription lookup failed before a credit grant", subError);
-      throw new Error("Couldn't read this member's plan. Nothing was changed — please try again.");
+      throw new Error(GRANT_LOOKUP_FAILED_MESSAGE);
     }
 
     const creditsByPlan = new Map<string, number>();
@@ -458,9 +459,7 @@ export const adminGrantStylingCredits = createServerFn({ method: "POST" })
         .maybeSingle();
       if (planError) {
         console.error("[member-billing] plan lookup failed before a credit grant", planError);
-        throw new Error(
-          "Couldn't read this member's plan. Nothing was changed — please try again.",
-        );
+        throw new Error(GRANT_LOOKUP_FAILED_MESSAGE);
       }
       if (plan) creditsByPlan.set(sub.plan_id, plan.credits_included);
     }

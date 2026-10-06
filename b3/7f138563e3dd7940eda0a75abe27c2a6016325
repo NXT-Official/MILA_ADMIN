@@ -1,0 +1,65 @@
+src/routes/__root.tsx
+  s_755964b2e0c3da::t_fcccbad0ed7793 31-33,36
+src/lib/observability/sentry-options.test.ts
+  s_755964b2e0c3da::t_03ead2a69b8d95 3
+  s_755964b2e0c3da::t_49c483e81309c9 23-29
+  s_755964b2e0c3da::t_b2e488cd944537 63-68
+.env.example
+  s_755964b2e0c3da::t_b163c58f37aca7 30-31,37-43
+src/lib/observability/scrub.test.ts
+  s_755964b2e0c3da::t_42a877b5380ca9 44-47
+  s_755964b2e0c3da::t_64a6d81b0dc337 5,10,13
+  s_755964b2e0c3da::t_1c570a6e951328 176-465,473-514
+  s_755964b2e0c3da::t_45b9e32fdd3c37 466-472
+  s_755964b2e0c3da::t_1d722075acb83d 2,515-523
+src/lib/query-client.test.ts
+  s_755964b2e0c3da::t_d54ee067e0e488 6,20,24-38
+  s_755964b2e0c3da::t_f6bf09716b9ea3 46
+  s_755964b2e0c3da::t_49047528f6ba2a 39-40
+src/lib/observability/wiring.test.ts
+  s_755964b2e0c3da::t_cea74005b5786d 67,69,71
+  s_755964b2e0c3da::t_ba7f372cc13954 52-53
+src/lib/observability/csp.test.ts
+  s_755964b2e0c3da::t_9efb25435963d3 25-28
+src/lib/observability/instrument.client.test.ts
+  s_755964b2e0c3da::t_08a1d21bf8e61e 51,57
+src/lib/observability/ingest.server.test.ts
+  s_755964b2e0c3da::t_9036f422526d98 6
+  s_755964b2e0c3da::t_31bca50184d3c5 202-203
+  s_755964b2e0c3da::t_87ae47f9c44b78 10-14
+  s_755964b2e0c3da::t_ac6b617a940b3a 151-201,204-232
+  s_755964b2e0c3da::t_4a52a424079a7a 233-236
+src/lib/observability/dsn.ts
+  s_755964b2e0c3da::t_496f4a4e5cf3e0 1-2,6-8,17-18
+src/lib/query-client.ts
+  s_755964b2e0c3da::t_43952297371e39 3,10-14,23,31
+src/integrations/supabase/auth-middleware.ts
+  s_755964b2e0c3da::t_289d5e5e4952e0 67-71
+  s_755964b2e0c3da::t_562971dab1099d 72
+src/lib/observability/sentry-options.ts
+  s_755964b2e0c3da::t_7efb68ef4e607e 3-9
+  s_755964b2e0c3da::t_144cbadd327ee6 35-40,45-48,50
+src/lib/observability/scrub.ts
+  s_755964b2e0c3da::t_c55d6ce608632c 5-6,8-32,34-63,66-75,81-84,87-88,90,93-98,105,108,119,130-132,134-158,160-161,165-212,219-232,234,237,242-243,247-253,259-262,266-280,282-304,308,313-329,332-335,345-356,384-399
+  s_755964b2e0c3da::t_c9f6c1171b7508 76,78-80
+  s_755964b2e0c3da::t_d2dad7ea23b908 100-104,106-107
+  s_755964b2e0c3da::t_3fddb88a4abe76 400
+src/lib/observability/instrument.client.ts
+  s_755964b2e0c3da::t_4b5a995029a69d 69-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b37f138563e3dd7940eda0a75abe27c2a6016325",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

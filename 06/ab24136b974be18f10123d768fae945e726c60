@@ -1,0 +1,97 @@
+src/lib/observability/ingest.server.test.ts
+  s_755964b2e0c3da::t_61c5fd9579ec23 1-53,55-145
+  s_755964b2e0c3da::t_463a8378df7a83 54
+src/lib/observability/observability.ts
+  s_755964b2e0c3da::t_9cf3cc7ebc89d9 1-104
+src/lib/query-client.test.ts
+  s_755964b2e0c3da::t_040742ba93a70a 1-13,15-51,53-56
+  s_755964b2e0c3da::t_72ccc8fff88efa 14,52
+src/lib/observability/scrub.ts
+  s_755964b2e0c3da::t_8fdbd7b218f0d4 1-163
+src/client.tsx
+  s_755964b2e0c3da::t_dfbf1cd030d83f 1-22
+src/lib/observability/instrument.server.ts
+  s_755964b2e0c3da::t_6158f25f902962 42
+  s_755964b2e0c3da::t_f3c86a3ab0553e 1-13,15-41,43-50
+  s_755964b2e0c3da::t_cefdc113becf85 14
+src/lib/observability/wiring.test.ts
+  s_755964b2e0c3da::t_f9f63b6228894f 1-65,67-108
+  s_755964b2e0c3da::t_1c10e2052690ae 66
+src/components/layout/observability-identity.tsx
+  s_755964b2e0c3da::t_9722f581b53f7c 1-19
+src/integrations/supabase/auth-middleware.ts
+  s_755964b2e0c3da::t_6e6a1dfbe57892 6
+  s_755964b2e0c3da::t_b0188bb2efd256 58-62
+src/server.ts
+  s_755964b2e0c3da::t_ebd74162644b5d 1-13
+src/lib/observability/instrument.client.ts
+  s_755964b2e0c3da::t_368e214c14a667 1-47,49-77
+  s_755964b2e0c3da::t_85f3d6cb48816b 48
+src/lib/observability/dsn.ts
+  s_755964b2e0c3da::t_00b73a75033716 1-19
+src/lib/sentry-client.ts
+  s_755964b2e0c3da::t_3b795204ca04cc 1,3-6,8,10-11
+src/lib/observability/scrub.test.ts
+  s_755964b2e0c3da::t_01da35811df976 1-13,15-168
+  s_755964b2e0c3da::t_13133f2d63a212 14
+src/lib/observability/server-entry.server.ts
+  s_755964b2e0c3da::t_e058620c979694 1-2,6-19,22,24
+  s_755964b2e0c3da::t_244f9dfbccd055 3-5,20-21,23
+.env.example
+  s_755964b2e0c3da::t_02594aa146a9b5 33-48
+src/lib/observability/observability.test.ts
+  s_755964b2e0c3da::t_72216a626e5d23 1-95
+src/lib/observability/sentry-options.test.ts
+  s_755964b2e0c3da::t_e48ef27d266d47 1-108
+src/lib/query-client.ts
+  s_755964b2e0c3da::t_a9ea2c35454047 1-32
+src/lib/sentry.server.ts
+  s_755964b2e0c3da::t_889b5417a53a31 1,3-6,10
+src/routes/__root.tsx
+  s_755964b2e0c3da::t_ec5b4f5f02cf75 14
+  s_755964b2e0c3da::t_09a967fbf47d88 108
+  s_755964b2e0c3da::t_c924ff8ad2b5c9 32-37
+  s_755964b2e0c3da::t_2a482fd109154d 1
+vite.config.ts
+  s_755964b2e0c3da::t_c6402ed6f87fb3 69-84,86-90
+  s_755964b2e0c3da::t_31740c7d2b4117 35-36
+  s_755964b2e0c3da::t_7eeedada4cb061 59-62
+  s_755964b2e0c3da::t_498fbe4a48b32c 8-9,11-16
+  s_755964b2e0c3da::t_c99013dc4ae7cc 162-192
+src/router.tsx
+  s_755964b2e0c3da::t_c3f0871f003e75 3,7
+  s_755964b2e0c3da::t_f94d00ea034ac9 6
+src/lib/observability/csp.ts
+  s_755964b2e0c3da::t_87b8089e33a61e 1-18
+src/start.ts
+  s_755964b2e0c3da::t_6cc4a4ed3eb3d5 2-5,8,18-20
+  s_755964b2e0c3da::t_efe7ba6475e0d8 33-35,37-38
+src/lib/observability/instrument.client.test.ts
+  s_755964b2e0c3da::t_fc9c65631c1465 1-58
+src/lib/observability/sentry-options.ts
+  s_755964b2e0c3da::t_c4c9c333849bdc 2
+  s_755964b2e0c3da::t_91b302fae571b1 50
+  s_755964b2e0c3da::t_f80de85a7aaf09 1,3-49,51-107
+src/lib/observability/csp.test.ts
+  s_755964b2e0c3da::t_114f642571ab37 1-25
+bun.lock
+  s_755964b2e0c3da::t_9519b4da719a98 19,405-424,445-448,587-588,627,695-696,803-804,837-838,971-972,989-990,1023-1024,1041-1044,1141-1142,1197-1198,1201-1202,1247-1248,1289-1292,1295-1297,1300-1301
+package.json
+  s_755964b2e0c3da::t_c01969b719c2da 31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "06ab24136b974be18f10123d768fae945e726c60",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

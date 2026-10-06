@@ -1,0 +1,65 @@
+src/lib/analytics.functions.ts
+  s_755964b2e0c3da::t_2a53b146eee906 84-86
+src/components/admin/member-billing-dialog.tsx
+  s_755964b2e0c3da::t_7f98da1d46b28a 24
+  s_755964b2e0c3da::t_e30656b72a23de 120-122
+src/lib/member-billing.functions.ts
+  s_755964b2e0c3da::t_084550a7edbc3a 679,681,687-693,698
+  s_755964b2e0c3da::t_f21b6a78d5b835 315
+  s_755964b2e0c3da::t_457e15c248f46a 560
+  s_755964b2e0c3da::t_a427de6197b6c6 603
+  s_755964b2e0c3da::t_66a686843c1d14 568
+  s_755964b2e0c3da::t_731bc64a0a7887 147-152,156-160
+  s_755964b2e0c3da::t_d419a13167fd75 298-301
+  s_755964b2e0c3da::t_706247edee6107 614
+  s_755964b2e0c3da::t_b3c8b25546c1ea 572,574,580-587,592-595
+  s_755964b2e0c3da::t_746e8b8a028f0c 33-37,42,44,46
+  s_755964b2e0c3da::t_0055193ecdcf5e 711
+  s_755964b2e0c3da::t_ae9114696796a0 32
+src/components/admin/members-columns.tsx
+  s_755964b2e0c3da::t_cff424d7e082bf 123-124
+src/lib/staff-prompts.test.ts
+  s_755964b2e0c3da::t_a5836248f25f34 3
+  s_755964b2e0c3da::t_32ec24b170def8 59-74,76-81
+  s_755964b2e0c3da::t_fec2acdb74992c 82
+src/lib/member-billing-page.test.ts
+  s_755964b2e0c3da::t_4e65bceaf81732 1-82
+src/components/admin/member-suspend-dialog.tsx
+  s_755964b2e0c3da::t_835a9445c1ac27 1-51
+src/lib/billing-dialog-mode.test.ts
+  s_755964b2e0c3da::t_3f92e7ad407a4a 1-60
+src/lib/billing-dialog-mode.ts
+  s_755964b2e0c3da::t_993af67b932fd9 1-40
+src/lib/credit-grant.test.ts
+  s_755964b2e0c3da::t_528fee5dff5cb1 7,10,12,107-143,210-264
+src/lib/credit-grant.ts
+  s_755964b2e0c3da::t_546942d1757edf 65-100
+src/lib/mrr.test.ts
+  s_755964b2e0c3da::t_9139cd5ff16799 2,18-20,24-36,98-145
+src/lib/mrr.ts
+  s_755964b2e0c3da::t_57892e6cc5a2f7 1,5,27-32,37,44
+src/lib/plan-slot.test.ts
+  s_755964b2e0c3da::t_9b06ef162fb291 1-56
+src/lib/plan-slot.ts
+  s_755964b2e0c3da::t_df72ae620df7b4 1-33
+src/lib/staff-prompts.ts
+  s_755964b2e0c3da::t_cbb889b9027404 26-43
+src/routes/_authed/members.tsx
+  s_755964b2e0c3da::t_ae89414b86704b 12,57-58,113-114,118-119,122,126-143,195-201,237,291-296
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "880a20a1a68ac08466d1b65e615c76a222a507a2",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "unknown"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

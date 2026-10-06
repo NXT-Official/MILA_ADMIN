@@ -1,0 +1,27 @@
+src/components/admin/subscription-columns.tsx
+  s_755964b2e0c3da::t_f781e3cccf2cf6 10,60
+src/lib/admin-members.test.ts
+  s_755964b2e0c3da::t_2f1d2278005cc3 3,58-59,68-77,85-100
+src/lib/admin.functions.ts
+  s_755964b2e0c3da::t_02062ade97f30c 18-26,137,167-169,255-257
+src/lib/subscription-tracker.test.ts
+  s_755964b2e0c3da::t_c385c2f25e54a2 2,8,300-331
+src/lib/subscription-tracker.ts
+  s_755964b2e0c3da::t_c1b2f77242b36b 250
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b211e54c552b75177426f82db663acae34047590",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

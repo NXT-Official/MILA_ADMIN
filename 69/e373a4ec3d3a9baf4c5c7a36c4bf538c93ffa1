@@ -1,0 +1,295 @@
+src/components/faqs/faq-highlight.tsx
+  s_755964b2e0c3da::t_bf848a96775637 9-10
+  s_755964b2e0c3da::t_d76325b9d24da4 1-8,11-19
+src/routeTree.gen.ts
+  s_755964b2e0c3da::t_3df58bbbd14504 21,29,75-79,115-119,130,138,149,157,170,178,191,199,210,218,230,238,313-319,369-375,385,393,402,410
+src/lib/faqs/search.test.ts
+  s_755964b2e0c3da::t_b29468e9a046e9 312-313
+  s_755964b2e0c3da::t_c271ed8bdc6114 13-15
+  s_755964b2e0c3da::t_df97206fbb0ca1 56-58,280,282
+  s_755964b2e0c3da::t_58f7a5c95822f2 264-265,267,271-273
+  s_755964b2e0c3da::t_491437864ecf76 1-12,16-55,59-228,230-258,274-279,283-311,314-349
+  s_755964b2e0c3da::t_a26121f3afef05 229,259-263,266,268-270,281
+src/lib/security-boundaries.test.ts
+  s_755964b2e0c3da::t_ed6ef14aa1fc40 35,47-54
+  s_755964b2e0c3da::t_bb6bbfb276b87b 55-56
+src/components/faqs/faq-search-box.tsx
+  s_755964b2e0c3da::t_5991fdbb6cbfe7 1-76
+src/components/staff/staff-header.tsx
+  s_755964b2e0c3da::t_6065ffef79d12b 43
+  s_755964b2e0c3da::t_1cae1b19366416 3
+  s_755964b2e0c3da::t_dbc9e58a76f8e8 29
+src/components/faqs/faq-markdown.tsx
+  s_755964b2e0c3da::t_37c82f35a2d509 58,60
+  s_755964b2e0c3da::t_083c48327aac12 178-180
+  s_755964b2e0c3da::t_db583c793a7a16 86-90,95
+  s_755964b2e0c3da::t_580891a51f142b 224
+  s_755964b2e0c3da::t_f487beccff563e 143-149
+  s_755964b2e0c3da::t_681d21d551b805 1-43,45-57,59,61-85,91-94,96-142,150-177,181-223,225-247,249-254,261-300
+  s_755964b2e0c3da::t_94a8dfb086a622 248
+  s_755964b2e0c3da::t_0942e6e6407799 255-260
+  s_755964b2e0c3da::t_91058c69ca46b4 44
+src/lib/staff-nav.test.ts
+  s_755964b2e0c3da::t_e90060ac35c544 1-28
+src/lib/faqs/articles.test.ts
+  s_755964b2e0c3da::t_d2d24fdd32d870 1-105,107-250
+  s_755964b2e0c3da::t_d785fab9ae7f98 106
+src/content/faqs/sign-in-and-sessions.md
+  s_755964b2e0c3da::t_4cf20f6d2fb1b3 111
+  s_755964b2e0c3da::t_2714ffa1deb993 1-38,40-91,93-110,112-143
+  s_755964b2e0c3da::t_6b8550ec998f5c 92
+  s_755964b2e0c3da::t_2a7fe6fbc6cd38 39
+src/components/faqs/faq-browser.test.tsx
+  s_755964b2e0c3da::t_41a7180c63a700 1-22,24-36,38-115,117-206,210-223
+  s_755964b2e0c3da::t_c05d061a9e8549 207-209
+  s_755964b2e0c3da::t_4091c26d5d1ecf 37
+  s_755964b2e0c3da::t_ce3dfa03ce1ed8 23,116
+src/content/faqs/start-here.md
+  s_755964b2e0c3da::t_cdbd783a41d4a3 1-21,23-124
+  s_755964b2e0c3da::t_a5bbd4dd6e27db 22
+src/content/faqs/shop-catalogue.md
+  s_755964b2e0c3da::t_094f48a70cfad5 1-24,26-33,35-53,55-85,87,89,91-102
+  s_755964b2e0c3da::t_e88ee918d1e266 25
+  s_755964b2e0c3da::t_335e85f656db1d 86
+  s_755964b2e0c3da::t_893041771925c2 88,90
+  s_755964b2e0c3da::t_fe73f814ad57ad 54
+  s_755964b2e0c3da::t_ed447680283121 34
+src/content/faqs/subscriptions-and-plans.md
+  s_755964b2e0c3da::t_12d88683c01649 129
+  s_755964b2e0c3da::t_5dfde132c71535 165
+  s_755964b2e0c3da::t_3fc437565f1351 1-48,50-54,56-58,60-98,100-119,122-127,130,132-164,166-175
+  s_755964b2e0c3da::t_6e50e6007389b6 99
+  s_755964b2e0c3da::t_910e2ad2a82e83 120-121,128,131
+  s_755964b2e0c3da::t_72f9c6c69d057e 59
+  s_755964b2e0c3da::t_362e822d230d5e 55
+  s_755964b2e0c3da::t_a84b0347e8222d 49
+src/lib/faqs/validate.ts
+  s_755964b2e0c3da::t_2ef92446adb20b 1-111
+src/content/faqs/adding-credits.md
+  s_755964b2e0c3da::t_dd354912347d9c 39
+  s_755964b2e0c3da::t_f3e5a1bd5961dc 85
+  s_755964b2e0c3da::t_fb3938548eb529 57,60
+  s_755964b2e0c3da::t_8c1dc18452ff59 1-33,35-38,40-56,58-59,61-84,86-95
+  s_755964b2e0c3da::t_767b87858056c9 34
+src/components/faqs/faq-article-view.test.tsx
+  s_755964b2e0c3da::t_e8385944978f4d 53-54,60-68
+  s_755964b2e0c3da::t_d21b1f7742d3be 121
+  s_755964b2e0c3da::t_3b63fc35e0f8cd 1-36,38-39,41-52,55-59,69-120,122-162
+  s_755964b2e0c3da::t_cfbedf62c6e0ce 40
+  s_755964b2e0c3da::t_88b2cd4e2a2645 37
+src/content/faqs/support-inbox.md
+  s_755964b2e0c3da::t_66dc37b8d05488 82
+  s_755964b2e0c3da::t_29118adf5b4375 28
+  s_755964b2e0c3da::t_eef5daf641aa1d 1-27,29-81,83-86
+src/lib/faqs/lint.ts
+  s_755964b2e0c3da::t_be071ef226d637 1-9,12-33,35,37-39,42-176
+  s_755964b2e0c3da::t_a6f7ba2b3c9711 34,36,40-41
+  s_755964b2e0c3da::t_6a5e726b535e31 10-11
+src/lib/authorization.ts
+  s_755964b2e0c3da::t_e019dd946fb92c 19-20
+  s_755964b2e0c3da::t_7f7bd79f1e169c 38
+  s_755964b2e0c3da::t_93ca6e6f45ebab 60-61
+src/components/staff/staff-sidebar.tsx
+  s_755964b2e0c3da::t_567ddfdc53f6f3 17,21
+  s_755964b2e0c3da::t_27f839a7842da5 78-79
+  s_755964b2e0c3da::t_5035f509ff5bad 49
+tests/helpers/render-with-router.tsx
+  s_755964b2e0c3da::t_97526f12d8b6e8 1-14,19,25-33,36-39
+  s_755964b2e0c3da::t_c77e2720ab19e0 15-18,20-24,34-35
+src/components/faqs/faq-markdown.test.tsx
+  s_755964b2e0c3da::t_67b7b6fbd90079 132
+  s_755964b2e0c3da::t_7bffeccac6778b 93-101
+  s_755964b2e0c3da::t_4607c855f5a8bf 137
+  s_755964b2e0c3da::t_a70f1a28b2911b 157
+  s_755964b2e0c3da::t_6c9295d95c9260 72,74-82
+  s_755964b2e0c3da::t_0f824f0073179c 1-46,49-59,73,83-92,102-131,133-136,138-143,145-156,158-172,174-181
+  s_755964b2e0c3da::t_98f96c1cb808dc 60-71
+  s_755964b2e0c3da::t_b8dcdd475a7135 144
+  s_755964b2e0c3da::t_eca90f8c59c879 47-48
+  s_755964b2e0c3da::t_3bbc6ca7dc8b28 173
+src/lib/faqs/format.ts
+  s_755964b2e0c3da::t_c069f30f80edb4 1-13
+src/components/faqs/use-slash-focus.test.ts
+  s_755964b2e0c3da::t_56ab621dc62499 1-25,27-52,54-55
+  s_755964b2e0c3da::t_53912617591ab1 53
+  s_755964b2e0c3da::t_43e686636494a5 26
+src/content/faqs/ai-settings.md
+  s_755964b2e0c3da::t_63385ed7007dd5 66
+  s_755964b2e0c3da::t_2e8da0f4b8769a 106
+  s_755964b2e0c3da::t_ff67f67925a832 1-65,67-105,107-110
+src/content/faqs/moderation.md
+  s_755964b2e0c3da::t_2678be710b91be 1-31,34-104
+  s_755964b2e0c3da::t_26d22b7bcab4c6 32-33
+src/components/faqs/faq-pending.tsx
+  s_755964b2e0c3da::t_979f0333245ccc 6-8
+  s_755964b2e0c3da::t_fb04b40808cfa7 1-5,9-33
+src/content/faqs/generations-and-tab-switching.md
+  s_755964b2e0c3da::t_9bac98dceec190 96
+  s_755964b2e0c3da::t_1ae5a46d34a141 57
+  s_755964b2e0c3da::t_4a4894addd0065 74
+  s_755964b2e0c3da::t_316b374c47dde6 1-52,54-56,58-73,75-95,97-110,112-118
+  s_755964b2e0c3da::t_6960be25de6bde 111
+  s_755964b2e0c3da::t_9f7cbca2e06aaf 53
+src/content/faqs/members-and-roles.md
+  s_755964b2e0c3da::t_9a4ec18a031016 1-39,42-80,84-157
+  s_755964b2e0c3da::t_77b5eecf3ebebf 40-41
+  s_755964b2e0c3da::t_0170518f44d5f8 81-83
+src/content/faqs/analytics-and-error-reporting.md
+  s_755964b2e0c3da::t_5ef36e3aa03fa2 49
+  s_755964b2e0c3da::t_c5e169d06451dc 92
+  s_755964b2e0c3da::t_27c2880697a7b7 70
+  s_755964b2e0c3da::t_5491384623bcb3 57
+  s_755964b2e0c3da::t_975be2159523fd 1-48,50-56,58-69,71-86,88-91,93,95-102,104-128
+  s_755964b2e0c3da::t_2eefe9ef566980 103
+  s_755964b2e0c3da::t_55d84bbe03addd 87
+  s_755964b2e0c3da::t_6ca30639abd27d 94
+src/lib/faqs/articles.ts
+  s_755964b2e0c3da::t_1dcf0dd0d0fd26 1-10,12-162
+  s_755964b2e0c3da::t_a50cdba256b900 11
+src/content/faqs/dupe-hunter.md
+  s_755964b2e0c3da::t_ad69d9ec3bd8a5 102
+  s_755964b2e0c3da::t_08d13e78521fbe 60
+  s_755964b2e0c3da::t_6298b49a458192 29
+  s_755964b2e0c3da::t_6cf49dc635bef7 118,120,122-123
+  s_755964b2e0c3da::t_7724598aff134f 1-28,30-50,52-59,61-100,103-117,119,121,124-153
+  s_755964b2e0c3da::t_64de9d80b02b58 101
+  s_755964b2e0c3da::t_09aae3f74600c8 51
+src/lib/faqs/lint.test.ts
+  s_755964b2e0c3da::t_9743c27ca5a61d 112
+  s_755964b2e0c3da::t_d855d0a2ae114a 123-124
+  s_755964b2e0c3da::t_65cc484282587d 1-111,113-117,119-122,125-165
+  s_755964b2e0c3da::t_29c07b64c5dd59 118
+src/components/faqs/faq-article-view.tsx
+  s_755964b2e0c3da::t_7b84e7400e6737 217
+  s_755964b2e0c3da::t_b08433039ba36e 3
+  s_755964b2e0c3da::t_a770a0f4d0307e 186
+  s_755964b2e0c3da::t_2ce29df65605b6 164-165,167-171
+  s_755964b2e0c3da::t_440fbb74ff6690 196-197
+  s_755964b2e0c3da::t_3f2e8a1517f86b 136-137
+  s_755964b2e0c3da::t_019eada69417d6 138
+  s_755964b2e0c3da::t_e65e594df19289 12-17
+  s_755964b2e0c3da::t_6da738d7639aca 1-2,4-11,18-135,139-163,166,172-185,187-195,198-216,218-224
+src/lib/faqs/content.test.ts
+  s_755964b2e0c3da::t_973ff12290f503 110
+  s_755964b2e0c3da::t_91696bb25997c3 14-15
+  s_755964b2e0c3da::t_d70159b379d32e 1-13,16-63,65-83,85-109,111-126
+  s_755964b2e0c3da::t_4c5e264a473197 84
+  s_755964b2e0c3da::t_96153d909469b9 64
+src/lib/faqs/frontmatter.ts
+  s_755964b2e0c3da::t_de5521ee8365d6 1-31,34-37,40-223
+  s_755964b2e0c3da::t_ebdf3f92248433 32-33
+  s_755964b2e0c3da::t_42deaa0d5e1083 38-39
+src/content/faqs/known-issues-and-owner-actions.md
+  s_755964b2e0c3da::t_f039fba91968a2 1-66,68-78,80-91
+  s_755964b2e0c3da::t_980198aeb229b1 67
+  s_755964b2e0c3da::t_9606852806bb91 79
+src/lib/faqs/query.test.ts
+  s_755964b2e0c3da::t_707cb0dd04cb83 1-31
+src/lib/faqs/frontmatter.test.ts
+  s_755964b2e0c3da::t_492e233c691929 93-94,96
+  s_755964b2e0c3da::t_505919380e765e 1-92,97-168
+  s_755964b2e0c3da::t_1de87342a196ff 95
+src/lib/faqs/search.ts
+  s_755964b2e0c3da::t_23b7d60ed82a25 323-326
+  s_755964b2e0c3da::t_5b481c95dc2ffb 227-229
+  s_755964b2e0c3da::t_321b5007d74503 230-235,237-255,257
+  s_755964b2e0c3da::t_75f3a4f081c491 87-97,100-101,103
+  s_755964b2e0c3da::t_798ef2829f728c 106
+  s_755964b2e0c3da::t_90922bca16b466 1-86,98-99,102,104-105,107-226,236,256,258-322,327-341
+src/lib/faqs/links.test.ts
+  s_755964b2e0c3da::t_a7253173cde1cf 1-25,36-37,39,44-50,52-77
+  s_755964b2e0c3da::t_3cfc79f1ce2c98 26-35,38,40-43
+  s_755964b2e0c3da::t_fcdbb85105029a 51
+src/lib/staff-nav.ts
+  s_755964b2e0c3da::t_9c394f778b913f 1-9
+src/components/faqs/faq-browser.tsx
+  s_755964b2e0c3da::t_aefc56b725e770 1-170,172-208
+  s_755964b2e0c3da::t_a61459b65cdd80 171
+src/lib/faqs/query.ts
+  s_755964b2e0c3da::t_99673c51f87a99 1-17
+src/content/faqs/announcements.md
+  s_755964b2e0c3da::t_0675e965283cdd 1-37,40-46,48-52,54-86
+  s_755964b2e0c3da::t_5be97fe1354112 53
+  s_755964b2e0c3da::t_4bd481f5ce6484 38-39
+  s_755964b2e0c3da::t_82c7b0a0dd7119 47
+src/lib/faqs/links.ts
+  s_755964b2e0c3da::t_d5c5a7584e0725 4-5,23,28-31
+  s_755964b2e0c3da::t_ecf982ddecbd3f 1-3,6-22,24-27,32-41
+src/lib/faqs/outline.test.ts
+  s_755964b2e0c3da::t_f674658251050f 1-139,141-155,157-165
+  s_755964b2e0c3da::t_ded2068226016e 140,156
+src/lib/faqs/types.ts
+  s_755964b2e0c3da::t_1599c8b55ff61a 1-92
+src/lib/faqs/outline.ts
+  s_755964b2e0c3da::t_723eae40d875ca 70
+  s_755964b2e0c3da::t_f81c97bb995b86 56,61
+  s_755964b2e0c3da::t_b664bc5e8cd180 1-55,57-60,62-69,71-173
+src/lib/faqs/validate.test.ts
+  s_755964b2e0c3da::t_9264649553af7f 1-56,58-60,63-88
+  s_755964b2e0c3da::t_3e20068e9b5201 57,61-62
+src/lib/authorization.test.ts
+  s_755964b2e0c3da::t_a65ff8e66810c2 39-54
+src/components/faqs/use-slash-focus.ts
+  s_755964b2e0c3da::t_ebdfac8da5d9b8 1-16,18-19,22-46
+  s_755964b2e0c3da::t_0b26a38a23307f 17,20-21
+src/content/faqs/environments-and-releases.md
+  s_755964b2e0c3da::t_c8cb26ea06951b 69
+  s_755964b2e0c3da::t_8fc9edeeebb52e 1-40,42-51,53-64,66-68,70-95
+  s_755964b2e0c3da::t_37d64c0b035c66 41
+  s_755964b2e0c3da::t_9789132a21f0ca 52
+  s_755964b2e0c3da::t_06339fdf271a3d 65
+src/routes/_authed/faqs.tsx
+  s_755964b2e0c3da::t_81846a958b4e0e 1-52,54-69
+  s_755964b2e0c3da::t_90c4df548a582c 53
+src/routes/_authed/faqs_.$slug.tsx
+  s_755964b2e0c3da::t_d81170288b2bba 1-40
+src/lib/faqs/library.ts
+  s_755964b2e0c3da::t_62c47f34ba95cc 1-30
+src/content/faqs/saved-pieces-and-garment-badges.md
+  s_755964b2e0c3da::t_f2ba63c1ba6df1 40
+  s_755964b2e0c3da::t_6f7853f3829925 69-70
+  s_755964b2e0c3da::t_f59d61275d3a0a 111-112
+  s_755964b2e0c3da::t_5ec0513051d718 94
+  s_755964b2e0c3da::t_bbfbe21a3eafcd 1-39,41-68,71-93,95-110,113-136
+src/content/faqs/credits-and-refunds.md
+  s_755964b2e0c3da::t_7859bbbc968233 163
+  s_755964b2e0c3da::t_b5198092a27fdb 62
+  s_755964b2e0c3da::t_1a02f4f0d79f17 148-149
+  s_755964b2e0c3da::t_449ac95bf2fefa 11
+  s_755964b2e0c3da::t_c1ff7478ff2482 1-10,12-61,63-147,150-162,164-240
+src/content/faqs/glossary.md
+  s_755964b2e0c3da::t_1f78d2b80a121c 131
+  s_755964b2e0c3da::t_86ae2199731c73 165
+  s_755964b2e0c3da::t_e9fc442f17b2fa 1-130,132-164
+src/content/faqs/database-browser.md
+  s_755964b2e0c3da::t_44c5f45988b44d 1-65,67-80,82-100,102-103
+  s_755964b2e0c3da::t_b9e3453a5aa722 66
+  s_755964b2e0c3da::t_b98faceeaacdd9 81
+  s_755964b2e0c3da::t_9f94e5797ef9ff 101
+bun.lock
+  s_755964b2e0c3da::t_ded571c3b1b20d 35-36,553-554,557-560,563-566,573-574,595-596,639-640,661-662,665-672,685-686,713-714,721-722,727-728,791-792,797-798,875-878,881-882,897-898,901-904,919-920,931-932,939-940,1019-1020,1027-1028,1031-1118,1169-1170,1195-1196,1207-1208,1223-1230,1279-1280,1293-1294,1297-1300,1315-1318,1351-1362,1377-1380,1415-1416,1485-1488
+package.json
+  s_755964b2e0c3da::t_bae9565ec18634 47-48
+src/components/faqs/faq-status-pill.tsx
+  s_755964b2e0c3da::t_61bd24497ef8ea 1-35
+src/content/faqs/__fixtures__/sample-one.md
+  s_755964b2e0c3da::t_28c5fb49edc6db 1-40
+src/content/faqs/__fixtures__/sample-two.md
+  s_755964b2e0c3da::t_989d9e51024cb5 1-16
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "69e373a4ec3d3a9baf4c5c7a36c4bf538c93ffa1",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

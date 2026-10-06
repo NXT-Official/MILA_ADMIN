@@ -183,6 +183,7 @@ function MembersPage() {
       });
       toast.success(
         `${result.amount} styling credit${result.amount === 1 ? "" : "s"} added — new balance ${result.totalCredits}.`,
+        result.warning ? { description: result.warning } : undefined,
       );
       await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
       qc.invalidateQueries({ queryKey: queryKeys.adminMemberBilling(target.id) });

@@ -12,6 +12,13 @@ import {
 } from "@/lib/authorization";
 import { z } from "zod";
 import { createMemberInputSchema, parseInput, updateMemberInputSchema } from "@/lib/staff-input";
+import {
+  effectiveCredits,
+  latestSubscriptionByUser,
+  liveDailyAllowance,
+  utcDay,
+} from "@/lib/credit-balance";
+import { CONSOLE_IN_FORCE_STATUSES } from "@/lib/member-billing";
 
 type MilaSupabaseClient = SupabaseClient<Database>;
 
@@ -81,13 +88,19 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const users = usersRes.users;
     const ids = users.map((u) => u.id);
 
-    const [profilesRes, rolesRes, entRes, staffActionsRes] = await Promise.all([
+    const [profilesRes, rolesRes, entRes, subsRes, plansRes, staffActionsRes] = await Promise.all([
       supabaseAdmin.from("profiles").select("id,full_name,username,suspended").in("id", ids),
       supabaseAdmin.from("user_roles").select("user_id,role").in("user_id", ids),
       supabaseAdmin
         .from("user_entitlements")
-        .select("user_id,ai_credits,purchased_credits")
+        .select("user_id,ai_credits,purchased_credits,credits_reset_at")
         .in("user_id", ids),
+      supabaseAdmin
+        .from("subscriptions")
+        .select("user_id,plan_id,status,current_period_end,cancel_at_period_end,updated_at")
+        .in("user_id", ids)
+        .in("status", [...CONSOLE_IN_FORCE_STATUSES]),
+      supabaseAdmin.from("subscription_plans").select("id,credits_included"),
       supabaseAdmin.from("staff_audit_log").select("actor_user_id").in("actor_user_id", ids),
     ]);
 
@@ -98,10 +111,23 @@ export const adminListUsers = createServerFn({ method: "GET" })
     const moderatorSet = new Set(
       (rolesRes.data ?? []).filter((r) => r.role === "moderator").map((r) => r.user_id),
     );
+    // What each member can spend today, not the raw columns: a plan member's
+    // `ai_credits` can still hold yesterday's leftover until the day resets.
+    const creditsByPlan = new Map(
+      (plansRes.data ?? []).map((plan) => [plan.id, plan.credits_included]),
+    );
+    const latestSubs = latestSubscriptionByUser(subsRes.data ?? []);
+    const today = utcDay();
     const credMap = new Map(
       (entRes.data ?? []).map((entitlement) => [
         entitlement.user_id,
-        entitlement.ai_credits + entitlement.purchased_credits,
+        effectiveCredits({
+          aiCredits: entitlement.ai_credits,
+          purchasedCredits: entitlement.purchased_credits,
+          creditsResetAt: entitlement.credits_reset_at,
+          planAllowance: liveDailyAllowance(latestSubs.get(entitlement.user_id), creditsByPlan),
+          today,
+        }),
       ]),
     );
     const actedAsStaff = new Set((staffActionsRes.data ?? []).map((row) => row.actor_user_id));

@@ -29,6 +29,12 @@ import {
   refundTransaction,
   type PaddleRefundAdjustment,
 } from "@/lib/paddle.server";
+import { effectiveDailyCredits, liveDailyAllowance, utcDay } from "@/lib/credit-balance";
+import {
+  assertEntitlementSynced,
+  describeGrantCreditsError,
+  recordGrantAudit,
+} from "@/lib/credit-grant";
 import { transactionAmountCents } from "@/lib/revenue";
 
 export interface MemberBillingPlanOption {
@@ -75,6 +81,7 @@ export interface MemberBillingSummary {
    * Paddle refund/cancel actions.
    */
   manualPlan: boolean;
+  /** What the member can spend today: the live daily allowance plus purchased credits. */
   credits: { aiCredits: number; purchasedCredits: number; total: number };
   plans: MemberBillingPlanOption[];
   latestTransaction: MemberLatestTransaction | null;
@@ -115,7 +122,7 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
         .maybeSingle(),
       supabaseAdmin
         .from("user_entitlements")
-        .select("ai_credits,purchased_credits")
+        .select("ai_credits,purchased_credits,credits_reset_at")
         .eq("user_id", data.user_id)
         .maybeSingle(),
       supabaseAdmin
@@ -130,6 +137,7 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
 
     const plans = plansRes.data ?? [];
     const planTitles = new Map<string, string>();
+    const planCredits = new Map<string, number>();
     const currentSub = subRes.data ?? null;
     const planIds = new Set<string>(plans.map((plan) => plan.id));
     if (currentSub) planIds.add(currentSub.plan_id);
@@ -138,11 +146,17 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
     if (missingPlanIds.length > 0) {
       const { data: extraPlans } = await supabaseAdmin
         .from("subscription_plans")
-        .select("id,title")
+        .select("id,title,credits_included")
         .in("id", missingPlanIds);
-      for (const plan of extraPlans ?? []) planTitles.set(plan.id, plan.title);
+      for (const plan of extraPlans ?? []) {
+        planTitles.set(plan.id, plan.title);
+        planCredits.set(plan.id, plan.credits_included);
+      }
     }
-    for (const plan of plans) planTitles.set(plan.id, plan.title);
+    for (const plan of plans) {
+      planTitles.set(plan.id, plan.title);
+      planCredits.set(plan.id, plan.credits_included);
+    }
 
     const subscription: MemberBillingSubscription | null = currentSub
       ? {
@@ -200,14 +214,27 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
       }
     }
 
+    // The member's spendable balance, not the raw columns: a plan member's
+    // `ai_credits` can still hold yesterday's leftover until the day resets.
+    const entitlement = entRes.data;
+    const dailyCredits = entitlement
+      ? effectiveDailyCredits({
+          aiCredits: entitlement.ai_credits,
+          creditsResetAt: entitlement.credits_reset_at,
+          planAllowance: liveDailyAllowance(currentSub, planCredits),
+          today: utcDay(),
+        })
+      : 0;
+    const purchasedCredits = entitlement?.purchased_credits ?? 0;
+
     return {
       paddleConfigured,
       subscription,
       manualPlan: isManualSubscription(currentSub?.paddle_subscription_id),
       credits: {
-        aiCredits: entRes.data?.ai_credits ?? 0,
-        purchasedCredits: entRes.data?.purchased_credits ?? 0,
-        total: (entRes.data?.ai_credits ?? 0) + (entRes.data?.purchased_credits ?? 0),
+        aiCredits: dailyCredits,
+        purchasedCredits,
+        total: dailyCredits + purchasedCredits,
       },
       plans: plans.map((plan) => ({
         id: plan.id,
@@ -388,6 +415,8 @@ export interface GrantCreditsResult {
   amount: number;
   /** The member's balance after the grant, as returned by the ledger RPC. */
   totalCredits: number;
+  /** Set when the credits landed but the staff audit record didn't — never a reason to retry. */
+  warning: string | null;
 }
 
 /**
@@ -404,25 +433,38 @@ export const adminGrantStylingCredits = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     // The allowance the RPC tops up to is the member's plan entitlement —
-    // resolved the same way the member app's credits.server.ts resolves it.
-    const { data: sub } = await supabaseAdmin
+    // resolved the same way the member app's credits.server.ts resolves it: the
+    // newest in-force subscription, and only while its paid period hasn't ended.
+    // A failed lookup stops here: guessing 0 would let the RPC wipe today's bucket.
+    const { data: sub, error: subError } = await supabaseAdmin
       .from("subscriptions")
-      .select("plan_id")
+      .select("plan_id,status,current_period_end,cancel_at_period_end")
       .eq("user_id", data.user_id)
       .in("status", [...CONSOLE_IN_FORCE_STATUSES])
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
+    if (subError) {
+      console.error("[member-billing] subscription lookup failed before a credit grant", subError);
+      throw new Error("Couldn't read this member's plan. Nothing was changed — please try again.");
+    }
 
-    let dailyAllowance = 0;
+    const creditsByPlan = new Map<string, number>();
     if (sub) {
-      const { data: plan } = await supabaseAdmin
+      const { data: plan, error: planError } = await supabaseAdmin
         .from("subscription_plans")
         .select("credits_included")
         .eq("id", sub.plan_id)
         .maybeSingle();
-      dailyAllowance = plan?.credits_included ?? 0;
+      if (planError) {
+        console.error("[member-billing] plan lookup failed before a credit grant", planError);
+        throw new Error(
+          "Couldn't read this member's plan. Nothing was changed — please try again.",
+        );
+      }
+      if (plan) creditsByPlan.set(sub.plan_id, plan.credits_included);
     }
+    const dailyAllowance = liveDailyAllowance(sub, creditsByPlan);
 
     const { data: totalCredits, error } = await supabaseAdmin
       .rpc("grant_ai_credits", {
@@ -431,16 +473,36 @@ export const adminGrantStylingCredits = createServerFn({ method: "POST" })
         _amount: data.amount,
       })
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      console.error("[member-billing] grant_ai_credits failed", error);
+      throw new Error(describeGrantCreditsError(error.message));
+    }
 
-    await recordStaffAction(context.userId, "member.credits_granted", "member", data.user_id, {
+    // The credits are in the member's balance now. A failing audit write must
+    // not look like a failed grant, or a retry grants them twice.
+    const warning = await recordGrantAudit(
+      () =>
+        recordStaffAction(context.userId, "member.credits_granted", "member", data.user_id, {
+          amount: data.amount,
+          note: data.note,
+          daily_allowance: dailyAllowance,
+          total_credits: totalCredits ?? null,
+        }),
+      (auditError) =>
+        console.error("[member-billing] credits granted but the audit record was not saved", {
+          actor: context.userId,
+          member: data.user_id,
+          amount: data.amount,
+          error: auditError,
+        }),
+    );
+
+    return {
+      ok: true,
       amount: data.amount,
-      note: data.note,
-      daily_allowance: dailyAllowance,
-      total_credits: totalCredits ?? null,
-    });
-
-    return { ok: true, amount: data.amount, totalCredits: (totalCredits as number | null) ?? 0 };
+      totalCredits: (totalCredits as number | null) ?? 0,
+      warning,
+    };
   });
 
 export interface MemberPlanGrantResult {
@@ -529,16 +591,17 @@ export const adminSetMemberPlan = createServerFn({ method: "POST" })
 
     // The write the Paddle webhook makes on a renewal, so the member sees the
     // plan's daily credits immediately instead of waiting for the next reset.
-    const { error: entitlementError } = await supabaseAdmin
+    const { data: syncedRows, error: entitlementError } = await supabaseAdmin
       .from("user_entitlements")
       .update({ ai_credits: plan.credits_included })
-      .eq("user_id", data.user_id);
+      .eq("user_id", data.user_id)
+      .select("user_id");
     if (entitlementError) {
       console.error("[member-billing] plan granted but entitlements not synced", entitlementError);
-      throw new Error(
-        `The plan was granted, but the member's credit balance didn't update: ${entitlementError.message}`,
-      );
+      throw new Error("The plan was granted, but the member's credit balance didn't update.");
     }
+    // A write that matches no row still reports success — check one was touched.
+    assertEntitlementSynced(syncedRows);
 
     await recordStaffAction(
       context.userId,

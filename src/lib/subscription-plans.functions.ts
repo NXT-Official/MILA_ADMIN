@@ -152,5 +152,8 @@ export const adminReorderSubscriptionPlans = createServerFn({ method: "POST" })
     );
     const failed = results.find((r) => r.error);
     if (failed?.error) throwPlanError(failed.error, "Couldn't reorder the plans.");
+    await recordStaffAction(context.userId, "plans.reordered", "subscription_plan", "all", {
+      plan_ids: data.plan_ids,
+    });
     return { ok: true };
   });

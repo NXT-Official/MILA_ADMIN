@@ -43,7 +43,9 @@ test("a sign-in by a non-staff account is dropped, not redirected", () => {
   // Redirecting alone would leave this form a working entry point for member
   // credentials, so the session has to be signed out and the cache cleared.
   const staffRoute = source("./staff-route.ts");
-  expect(staffRoute).toContain("await supabase.auth.signOut()");
+  // Scoped to the local session: the global default also signed the account
+  // out of every other device when a non-staff login was rejected here.
+  expect(staffRoute).toContain('await supabase.auth.signOut({ scope: "local" })');
   expect(staffRoute).toContain("queryClient.clear()");
   expect(source("../hooks/use-login-redirect.ts")).toContain("rejectNonStaffLogin(queryClient)");
   // The notice must not name a role — that tells a prober which one to guess.

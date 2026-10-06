@@ -11,9 +11,14 @@ export const NON_STAFF_NOTICE = "This sign-in is for Mila staff only.";
 /**
  * Undoes a sign-in by an account with no staff role, cache and all. Redirecting
  * alone would leave this form a working entry point for member credentials.
+ *
+ * Scope is "local" on purpose: it drops only the session used on this origin.
+ * The global default also revoked the account's sessions on every other
+ * device — a member who took a wrong turn through the staff form lost their
+ * phone and web sessions too.
  */
 export async function rejectNonStaffLogin(queryClient: QueryClient) {
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "local" });
   queryClient.clear();
   toast.error(NON_STAFF_NOTICE);
 }

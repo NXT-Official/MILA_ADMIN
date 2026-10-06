@@ -193,13 +193,19 @@ export const adminCreateMember = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.auth.admin.createUser({
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
       email: data.email,
       password: data.password,
       email_confirm: true,
       user_metadata: { full_name: data.full_name ?? "", username: data.username },
     });
     if (error) throw new Error(error.message);
+    if (!created?.user) throw new Error("Couldn't create this member.");
+    await recordStaffAction(context.userId, "member.created", "member", created.user.id, {
+      email: created.user.email ?? null,
+      full_name: data.full_name ?? null,
+      username: data.username ?? null,
+    });
     return { ok: true };
   });
 
@@ -224,6 +230,9 @@ export const adminUpdateMember = createServerFn({ method: "POST" })
         error.message.includes("duplicate") ? "Username already taken." : error.message,
       );
     }
+    await recordStaffAction(context.userId, "member.updated", "member", data.user_id, {
+      changed_fields: Object.keys(data).filter((key) => key !== "user_id"),
+    });
     return { ok: true };
   });
 

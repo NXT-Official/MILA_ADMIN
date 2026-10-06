@@ -6,10 +6,17 @@ export interface CsvColumn<T> {
   value: (row: T) => unknown;
 }
 
+/** Spreadsheet apps treat a cell leading with one of these as a formula
+ * (=, +, @), a potential formula (-), or a parsing trap (tab, CR). Prefixing
+ * the single-quote text marker keeps exported data inert (CSV formula
+ * injection — the payload is data, never code). */
+const FORMULA_LEADING = /^[=+\-@\t\r]/;
+
 function escapeCell(value: unknown): string {
   if (value === null || value === undefined) return '""';
   const text = typeof value === "object" ? JSON.stringify(value) : String(value);
-  return `"${text.replace(/"/g, '""')}"`;
+  const safe = FORMULA_LEADING.test(text) ? `'${text}` : text;
+  return `"${safe.replace(/"/g, '""')}"`;
 }
 
 export function toCsv<T>(columns: CsvColumn<T>[], rows: T[]): string {

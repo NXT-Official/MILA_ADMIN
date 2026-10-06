@@ -15,6 +15,15 @@ import { createMemberInputSchema, parseInput, updateMemberInputSchema } from "@/
 
 type MilaSupabaseClient = SupabaseClient<Database>;
 
+/**
+ * Whether two ids name the same account. `z.string().uuid()` accepts uppercase
+ * hex and Postgres casts it to the same uuid, so a plain `===` against the
+ * (lowercase) signed-in id lets someone slip past a "not yourself" guard.
+ */
+export function isSameAccount(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase();
+}
+
 export async function getCurrentUserRoles(
   supabase: MilaSupabaseClient,
   userId: string,
@@ -125,7 +134,7 @@ export const adminSetUserRole = createServerFn({ method: "POST" })
   .validator((input: unknown) => SetRoleInput.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    if (data.role === "admin" && data.user_id === context.userId && !data.grant) {
+    if (data.role === "admin" && isSameAccount(data.user_id, context.userId) && !data.grant) {
       throw new Error("You cannot revoke your own Steward role.");
     }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -155,7 +164,9 @@ const SetSuspendedInput = z.object({
 
 /** Staff can reinstate themselves, but never suspend their own account. */
 export function assertCanSetSuspended(actorId: string, targetId: string, suspended: boolean) {
-  if (suspended && actorId === targetId) throw new Error("You can't suspend your own account.");
+  if (suspended && isSameAccount(actorId, targetId)) {
+    throw new Error("You can't suspend your own account.");
+  }
 }
 
 export const adminSetSuspended = createServerFn({ method: "POST" })
@@ -241,7 +252,9 @@ export const adminDeleteMember = createServerFn({ method: "POST" })
   .validator((input: unknown) => DeleteMemberInput.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase, context.userId);
-    if (data.user_id === context.userId) throw new Error("You cannot delete your own account.");
+    if (isSameAccount(data.user_id, context.userId)) {
+      throw new Error("You cannot delete your own account.");
+    }
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const [userRes, profileRes, rolesRes, actorHistoryRes, adminRoleRes] = await Promise.all([

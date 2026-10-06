@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
   buildTrackerRows,
   formatTrackerAmount,
   formatTrackerDate,
   isExpired,
+  isGrantedInForce,
   readLedgerMetadata,
   summarizeTracker,
   trackerStatusLabel,
@@ -292,6 +294,38 @@ describe("buildTrackerRows", () => {
   test("an unknown plan id is named as unknown rather than shown as a uuid", () => {
     const [row] = buildTrackerRows(input({ plans: [] }));
     expect(row.planTitle).toBe("Unknown plan");
+  });
+});
+
+describe("isGrantedInForce", () => {
+  const row = (status: string, paddleId: string) =>
+    buildTrackerRows(
+      input({
+        subscriptions: [{ ...SUBSCRIPTION, status, paddle_subscription_id: paddleId }],
+      }),
+    )[0];
+
+  test("true only for a granted plan that is still in force", () => {
+    for (const status of ["active", "trialing", "past_due"]) {
+      expect(isGrantedInForce(row(status, "manual:abc"))).toBe(true);
+    }
+    for (const status of ["canceled", "paused"]) {
+      expect(isGrantedInForce(row(status, "manual:abc"))).toBe(false);
+    }
+  });
+
+  test("never true for a billed plan, whatever its status", () => {
+    expect(isGrantedInForce(row("active", "sub_01billed"))).toBe(false);
+  });
+
+  test("the subscriptions table only says granted-by-the-team while the grant is in force", () => {
+    const columns = readFileSync(
+      new URL("../components/admin/subscription-columns.tsx", import.meta.url),
+      "utf8",
+    );
+    expect(columns).toContain("isGrantedInForce(row.original) &&");
+    // The old line showed the sub-label for every manual row, canceled ones included.
+    expect(columns).not.toContain("row.original.isManual &&");
   });
 });
 

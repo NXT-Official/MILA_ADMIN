@@ -7,6 +7,7 @@ import {
   formatTrackerAmount,
   formatTrackerDate,
   isExpired,
+  isGrantedInForce,
   trackerStatusLabel,
   trackerStatusTone,
   type SubscriptionTrackerRow,
@@ -56,7 +57,7 @@ export function getSubscriptionColumns({
       cell: ({ row }) => (
         <div className="min-w-0">
           <div className="text-sm text-ink truncate">{row.original.planTitle}</div>
-          {row.original.isManual && (
+          {isGrantedInForce(row.original) && (
             <div className="text-micro uppercase tracking-label text-stone mt-0.5">
               Granted by the Mila team
             </div>

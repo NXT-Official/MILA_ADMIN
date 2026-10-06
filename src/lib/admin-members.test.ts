@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { assertCanSetSuspended } from "./admin.functions";
+import { assertCanSetSuspended, isSameAccount } from "./admin.functions";
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
 
@@ -55,8 +55,8 @@ test("the members list flags accounts that have acted as staff", () => {
 });
 
 test("staff cannot suspend their own account, in the console or on the server", () => {
-  const actor = "11111111-1111-4111-8111-111111111111";
-  const other = "22222222-2222-4222-8222-222222222222";
+  const actor = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+  const other = "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff";
   expect(() => assertCanSetSuspended(actor, actor, true)).toThrow(
     "You can't suspend your own account.",
   );
@@ -65,10 +65,36 @@ test("staff cannot suspend their own account, in the console or on the server", 
   expect(() => assertCanSetSuspended(other, other, false)).not.toThrow();
   expect(() => assertCanSetSuspended(actor, other, false)).not.toThrow();
 
+  // `z.string().uuid()` accepts uppercase hex and Postgres casts it to the same
+  // uuid, so the comparison cannot be case-sensitive or one keystroke bypasses it.
+  expect(() => assertCanSetSuspended(actor, actor.toUpperCase(), true)).toThrow(
+    "You can't suspend your own account.",
+  );
+  expect(() => assertCanSetSuspended(actor.toUpperCase(), actor, true)).toThrow(
+    "You can't suspend your own account.",
+  );
+  expect(() => assertCanSetSuspended(actor, other.toUpperCase(), true)).not.toThrow();
+
   // The guard has to run before the suspend RPC writes anything.
   const fn = source("./admin.functions.ts");
   const guard = fn.indexOf("assertCanSetSuspended(context.userId, data.user_id, data.suspended)");
   const write = fn.indexOf('rpc("set_user_suspended"');
   expect(guard).toBeGreaterThan(-1);
   expect(write).toBeGreaterThan(guard);
+});
+
+test("every not-yourself guard compares ids without regard to case", () => {
+  expect(
+    isSameAccount("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "AAAAAAAA-BBBB-4CCC-8DDD-EEEEEEEEEEEE"),
+  ).toBe(true);
+  expect(
+    isSameAccount("aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee", "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff"),
+  ).toBe(false);
+
+  // Revoking your own Steward role and deleting your own account use the same
+  // comparison, so neither can be slipped past with an uppercase id.
+  const fn = source("./admin.functions.ts");
+  expect(fn).toContain("isSameAccount(data.user_id, context.userId) && !data.grant");
+  expect(fn).toContain("if (isSameAccount(data.user_id, context.userId)) {");
+  expect(fn).not.toContain("data.user_id === context.userId");
 });

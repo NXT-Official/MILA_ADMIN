@@ -247,7 +247,7 @@ const IN_FORCE_STATUSES: ReadonlySet<string> = new Set(["active", "trialing", "p
  * canceled or lapses it is an ended membership like any other, so the row says
  * so instead of still claiming a grant that no longer gives anything.
  */
-function isGrantedInForce(row: SubscriptionTrackerRow): boolean {
+export function isGrantedInForce(row: SubscriptionTrackerRow): boolean {
   return row.isManual && IN_FORCE_STATUSES.has(row.status);
 }
 

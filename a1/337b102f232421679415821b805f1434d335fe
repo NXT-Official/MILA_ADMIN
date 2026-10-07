@@ -1,0 +1,54 @@
+src/content/faqs/dupe-hunter.md
+  s_755964b2e0c3da::t_d8e6d82c3893f5 11,28,32-33,47,49-52,60,63-64,70,73,80,84-86,88-89,95,103,123,127-129,138,141-142,145,151
+src/content/faqs/known-issues-and-owner-actions.md
+  s_755964b2e0c3da::t_fc30c88228e45a 21-22,27-30,37-40,64-65,69,72,78,81-83,85
+src/content/faqs/glossary.md
+  s_755964b2e0c3da::t_fc30c88228e45a 21,25,39,51,77,85,99,103,111,115,123
+src/content/faqs/analytics-and-error-reporting.md
+  s_755964b2e0c3da::t_21eabe0b735201 11,47,56-58,63-64,80-82,89,91,105,112-119,133,135
+src/content/faqs/environments-and-releases.md
+  s_755964b2e0c3da::t_fc30c88228e45a 25,33,44,47,52,64-65,73
+src/content/faqs/support-inbox.md
+  s_755964b2e0c3da::t_7b4fcbabc14bd4 21-23,25,75,83
+src/content/faqs/sign-in-and-sessions.md
+  s_755964b2e0c3da::t_fc30c88228e45a 21,25-27,38,56,80,82-86,100-102,104-106,108,110,112-114,121,129,135
+  s_755964b2e0c3da::t_f5a631f7d6b442 136
+src/content/faqs/generations-and-tab-switching.md
+  s_755964b2e0c3da::t_7b93d7c2392696 11,13,28-29,31,33,45,51-53,57-59,65-68,84-85,87-88,92,97-98,100-101,104-106,110
+src/content/faqs/credits-and-refunds.md
+  s_755964b2e0c3da::t_efa771acf980c6 16,29-32,47-48,63,67,72-73,79,81,85-89,97-98,107-108,112,114,116,126-127,133,154-155,157-159,165-166,168,179,181,186,190-199,202-204,208,210-211,214,218-220,226
+src/content/faqs/adding-credits.md
+  s_755964b2e0c3da::t_a2b42daa088e5e 11,50,60,62-63,73-75,79,90
+src/content/faqs/announcements.md
+  s_755964b2e0c3da::t_29efa432d20f08 27,30-33,37,48
+src/content/faqs/database-browser.md
+  s_755964b2e0c3da::t_eeec7759744f3d 23,32,56,97
+src/content/faqs/members-and-roles.md
+  s_755964b2e0c3da::t_313eaac6e84ae5 26,32,65,85,89,122,138,149
+src/content/faqs/moderation.md
+  s_755964b2e0c3da::t_c083d2b98b5045 42,52,96
+src/content/faqs/saved-pieces-and-garment-badges.md
+  s_755964b2e0c3da::t_004b92d707af24 45-50,60-61,72,81,109-110,114,124,127,130
+src/content/faqs/shop-catalogue.md
+  s_755964b2e0c3da::t_685464a6cfe9a5 25,34,54,73,77,81-82,98
+src/content/faqs/start-here.md
+  s_755964b2e0c3da::t_f0b87e8f51f9cf 29,81,87-92,106
+src/content/faqs/subscriptions-and-plans.md
+  s_755964b2e0c3da::t_6f42ad2d9de01a 69,74,99,120
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a1337b102f232421679415821b805f1434d335fe",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

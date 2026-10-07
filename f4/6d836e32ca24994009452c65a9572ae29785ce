@@ -1,0 +1,29 @@
+src/components/faqs/faq-callout.tsx
+  s_755964b2e0c3da::t_5a95a11ea90081 1-39
+src/components/faqs/faq-markdown.tsx
+  s_755964b2e0c3da::t_ab43e658b49049 5,10
+  s_755964b2e0c3da::t_d2f93d2eebd644 193-194,196-198
+  s_755964b2e0c3da::t_767f21160ccdd8 37
+src/components/faqs/faq-article-view.test.tsx
+  s_755964b2e0c3da::t_3d3e2eaa4d0322 144-151
+src/components/faqs/faq-article-view.tsx
+  s_755964b2e0c3da::t_c91c1e81a70347 34,37,40,47
+src/components/faqs/faq-markdown.test.tsx
+  s_755964b2e0c3da::t_a8aa0524989885 135-148,152-155,158,162-207,210,214-216
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f46d836e32ca24994009452c65a9572ae29785ce",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

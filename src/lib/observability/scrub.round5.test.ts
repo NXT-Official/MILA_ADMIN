@@ -101,7 +101,10 @@ describe("N2, L4: every database column is redacted unless it is a debug key", (
     expect(kept.sort()).toEqual([
       "analytics_events.source",
       "brands.status",
+      "generation_jobs.kind",
+      "generation_jobs.status",
       "purchases.status",
+      "saved_products.source",
       "staff_audit_log.action",
       "staff_audit_log.target_type",
       "subscriptions.status",

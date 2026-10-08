@@ -29,6 +29,7 @@ test("cards read their values from the stats they are handed", () => {
   const [first] = analyticsCards({
     activeSubscriptions: 7,
     mrrCents: 4_200,
+    mrrByCurrency: [],
     mrrCurrency: "USD",
     revenue: {
       available: true,
@@ -66,6 +67,7 @@ test("cards read their values from the stats they are handed", () => {
   const cards = analyticsCards({
     activeSubscriptions: 0,
     mrrCents: 0,
+    mrrByCurrency: [],
     mrrCurrency: "USD",
     revenue: {
       available: true,
@@ -106,6 +108,7 @@ test("cards read their values from the stats they are handed", () => {
   const [noSpendYet] = analyticsCards({
     activeSubscriptions: 0,
     mrrCents: 0,
+    mrrByCurrency: [],
     mrrCurrency: "USD",
     revenue: {
       available: false,
@@ -157,6 +160,7 @@ test("the catalogue count opens the shop inventory from both screens", () => {
   const analyticsCatalogue = analyticsCards({
     activeSubscriptions: 0,
     mrrCents: 0,
+    mrrByCurrency: [],
     mrrCurrency: "USD",
     revenue: {
       available: false,
@@ -227,6 +231,7 @@ test("a search term cannot break out of the PostgREST or-filter grammar", () => 
 const quietStats: AdminAnalyticsSummary = {
   activeSubscriptions: 0,
   mrrCents: 0,
+  mrrByCurrency: [],
   mrrCurrency: "usd",
   revenue: {
     available: false,
@@ -269,4 +274,24 @@ test("the MRR card shows dollars, not the cents the plans are stored in", () => 
   expect(mrrCardValue(120_000)).toBe("$1,200.00");
   expect(mrrCardValue(0)).toBe("$0.00");
   expect(mrrCardValue(undefined)).toBe("$0.00");
+});
+
+test("the MRR card says what it leaves out", () => {
+  const mrr = analyticsCards(undefined).find((card) => card.label.startsWith("MRR"));
+  expect(mrr?.sublabel).toContain("Trials");
+  expect(mrr?.sublabel).toContain("staff grants");
+});
+
+test("the MRR card shows one figure per currency, never a mixed sum", () => {
+  const stats = {
+    ...quietStats,
+    mrrCents: 123_400,
+    mrrCurrency: "USD",
+    mrrByCurrency: [
+      { currency: "USD", cents: 123_400 },
+      { currency: "EUR", cents: 5_600 },
+    ],
+  };
+  const card = analyticsCards(stats).find((item) => item.label.startsWith("MRR"));
+  expect(card?.value).toBe("$1,234.00 · €56.00");
 });

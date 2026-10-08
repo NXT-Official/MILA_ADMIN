@@ -93,3 +93,39 @@ export function latestSubscriptionByUser<T extends { user_id: string; updated_at
   }
   return latest;
 }
+
+export interface MemberBalance {
+  aiCredits: number;
+  purchasedCredits: number;
+  total: number;
+}
+
+/**
+ * The balance a staff dialog shows, from the raw entitlement read. A failed read
+ * is `null` ("balance unavailable"), never zero: zero would read as a member who
+ * has nothing, and a dialog must not be blocked because one number is missing.
+ * A successful read with no row is a real zero.
+ */
+export function memberBalanceOrNull(
+  read: {
+    data: { ai_credits: number; purchased_credits: number; credits_reset_at: string | null } | null;
+    error: unknown;
+  },
+  planAllowance: number | null,
+  today: string,
+): MemberBalance | null {
+  if (read.error) return null;
+  const entitlement = read.data;
+  if (!entitlement) return { aiCredits: 0, purchasedCredits: 0, total: 0 };
+  const aiCredits = effectiveDailyCredits({
+    aiCredits: entitlement.ai_credits,
+    creditsResetAt: entitlement.credits_reset_at,
+    planAllowance,
+    today,
+  });
+  return {
+    aiCredits,
+    purchasedCredits: entitlement.purchased_credits,
+    total: aiCredits + entitlement.purchased_credits,
+  };
+}

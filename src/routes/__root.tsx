@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -10,10 +11,12 @@ import {
 
 import appCss from "../styles.css?url";
 import { AuthProvider } from "@/components/layout/auth-provider";
+import { ObservabilityIdentity } from "@/components/layout/observability-identity";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ErrorState } from "@/components/ui/error-state";
 import { captureClientException } from "@/lib/sentry-client";
+import { logErrorOnce } from "@/lib/observability/observability";
 
 function NotFoundComponent() {
   return (
@@ -26,8 +29,15 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: ErrorComponentProps) {
-  console.error(error);
-  captureClientException(error);
+  // Logged and reported once per error, after render: doing either during
+  // render repeated it on every re-render (and console errors are now shipped
+  // as logs). logErrorOnce, because React's onCaughtError has usually logged
+  // this same error already. Pattern from Sentry's TanStack Start guide.
+  // src: https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/manual-setup/#tanstack-router-errorcomponent · 10.75.2
+  useEffect(() => {
+    logErrorOnce(error);
+    captureClientException(error);
+  }, [error]);
   const router = useRouter();
 
   return (
@@ -98,6 +108,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AuthProvider>
+          <ObservabilityIdentity />
           <Outlet />
           <Toaster />
         </AuthProvider>

@@ -1,20 +1,11 @@
-import * as Sentry from "@sentry/node";
+import { captureError } from "./observability/observability";
 
-// Optional: local dev and any deployment without a configured Sentry project
-// must keep working with this unset, so this is a plain guard rather than
-// requireEnv (see src/lib/env.ts) — a missing DSN must not hard-fail the app.
-const dsn = process.env.SENTRY_DSN;
-
-if (dsn) {
-  Sentry.init({
-    dsn,
-    environment: process.env.NODE_ENV,
-    tracesSampleRate: 0.1,
-  });
-}
+// Kept as a thin delegate so existing callers (auth-handler.server.ts,
+// hcaptcha.server.ts) keep working. Sentry itself now starts once, in
+// src/server.ts (see ./observability/instrument.server.ts), and stays off when
+// SENTRY_DSN is unset: a missing DSN must not hard-fail the app.
 
 /** Reports a server-side error to Sentry. No-op when SENTRY_DSN is unset. */
 export function captureServerException(error: unknown): void {
-  if (!dsn) return;
-  Sentry.captureException(error);
+  captureError(error);
 }

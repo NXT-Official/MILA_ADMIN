@@ -1,9 +1,10 @@
-import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
+import { createQueryClient } from "./lib/query-client";
 
 export const getRouter = () => {
-  const queryClient = new QueryClient();
+  // Same defaults as a bare QueryClient, plus error reporting (see query-client.ts).
+  const queryClient = createQueryClient();
 
   const router = createRouter({
     routeTree,

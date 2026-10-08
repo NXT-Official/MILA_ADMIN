@@ -14,9 +14,11 @@ import {
   Loader2,
   ReceiptText,
   Megaphone,
+  GraduationCap,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { staffSectionOf } from "@/lib/staff-nav";
 import { useAuth } from "@/hooks/use-auth";
 import { useSignOut } from "@/hooks/use-sign-out";
 import {
@@ -44,6 +46,7 @@ const STAFF_LINKS: StaffNavItem[] = [
   { to: "/ai-settings", label: "AI Settings", icon: Cpu },
   { to: "/moderation", label: "Moderation", icon: ShieldAlert },
   { to: "/support", label: "Support", icon: LifeBuoy },
+  { to: "/faqs", label: "FAQs (Training)", icon: GraduationCap },
 ];
 
 export function StaffSidebar({
@@ -72,7 +75,8 @@ export function StaffSidebar({
 
       <nav className="flex flex-col gap-1.5" aria-label="Staff sections">
         {links.map(({ to, label, icon: Icon }) => {
-          const active = path === to;
+          // An article page (/faqs/some-article) keeps its section lit.
+          const active = staffSectionOf(path) === to;
           return (
             <Link
               key={to}

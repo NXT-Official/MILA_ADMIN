@@ -52,20 +52,28 @@ export function formatAiSpend(usd: number): string {
   }).format(usd);
 }
 
+/** One figure per currency, joined with a dot. Falls back to the headline pair when there is no breakdown. */
+function formatMrr(stats: AdminAnalyticsSummary | undefined): string {
+  const parts = stats?.mrrByCurrency ?? [];
+  if (parts.length === 0) return formatPlanPrice(stats?.mrrCents ?? 0, stats?.mrrCurrency ?? "USD");
+  return parts.map((part) => formatPlanPrice(part.cents, part.currency)).join(" · ");
+}
+
 export function analyticsCards(stats: AdminAnalyticsSummary | undefined): StatCard[] {
   return [
     {
       icon: CreditCard,
       label: "Active Subscriptions",
       value: stats?.activeSubscriptions ?? 0,
+      sublabel: "In force now, trials and staff grants included",
       to: "/database",
       table: "subscriptions",
     },
     {
       icon: DollarSign,
       label: "MRR (estimate)",
-      value: formatPlanPrice(stats?.mrrCents ?? 0, stats?.mrrCurrency ?? "USD"),
-      sublabel: "Billed plans only, yearly plans ÷ 12",
+      value: formatMrr(stats),
+      sublabel: "Paid plans only. Trials and staff grants left out. Yearly plans ÷ 12.",
       to: "/database",
       table: "subscriptions",
     },

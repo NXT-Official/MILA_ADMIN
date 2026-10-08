@@ -36,6 +36,22 @@ test("a moderator is shut out of every admin-only screen", () => {
   }
 });
 
+test("the FAQs (Training) screen is open to every staff role", () => {
+  const permission = STAFF_ROUTE_PERMISSIONS["/faqs"];
+  expect(permission).toBe("faqs.view");
+  expect(hasPermission(["admin"], permission)).toBe(true);
+  expect(hasPermission(["moderator"], permission)).toBe(true);
+  expect(hasPermission([], permission)).toBe(false);
+});
+
+test("adding the FAQs screen does not change where anyone lands after sign-in", () => {
+  // staffHome hands out the first door a viewer can open, so a screen every role
+  // can open has to sit after the ones that decide the landing page.
+  const faqs = STAFF_ROUTES.indexOf("/faqs");
+  expect(faqs).toBeGreaterThan(STAFF_ROUTES.indexOf("/moderation"));
+  expect(faqs).toBeGreaterThan(STAFF_ROUTES.indexOf("/dashboard"));
+});
+
 test("an admin holds every permission and both roles clear the suite floor", () => {
   for (const permission of APP_PERMISSIONS) {
     expect(hasPermission(["admin"], permission)).toBe(true);

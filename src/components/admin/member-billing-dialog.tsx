@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { AdminUserRow } from "@/lib/admin.functions";
+import { billingDialogMode } from "@/lib/billing-dialog-mode";
 import {
   PLAN_ACTIONS,
   PLAN_ACTION_LABELS,
@@ -116,7 +117,9 @@ export function MemberBillingDialog({
   const targetPlan = switchablePlans.find((plan) => plan.id === targetPlanId) ?? null;
   const grantPlan = plans.find((plan) => plan.id === grantPlanId) ?? null;
 
-  const mode = !subscription ? "grant" : manualPlan ? "granted" : "paddle";
+  // The shared in-force rule decides "granted": the manual flag alone would call
+  // a canceled staff grant "Granted by staff" and offer to end it.
+  const mode = billingDialogMode({ subscription, manualPlan });
 
   const canSubmit =
     !pending &&
@@ -181,6 +184,11 @@ export function MemberBillingDialog({
           </div>
         ) : (
           <div className="space-y-5">
+            {data.credits === null && (
+              <p role="status" className="text-xs text-stone">
+                Credit balance unavailable right now. The plan controls below still work.
+              </p>
+            )}
             {mode === "paddle" && subscription && (
               <>
                 <div className="rounded-panel border border-porcelain/60 bg-atelier-panel/40 px-4 py-3 text-xs">

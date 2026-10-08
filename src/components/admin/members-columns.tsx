@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ActionItem, RowActionsMenu, ToggleCell } from "@/components/admin/table-cells";
 import { DataTableColumnHeader } from "@/components/ui/data-table-column-header";
 import type { AdminUserRow } from "@/lib/admin.functions";
-import { confirmSuspend } from "@/lib/staff-prompts";
+import { describeMemberCredits } from "@/lib/credit-display";
 
 interface MembersColumnsOptions {
   currentUserId?: string;
@@ -54,9 +54,28 @@ export function getMembersColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Credits" className="justify-center w-full" />
       ),
-      cell: ({ row }) => (
-        <div className="text-center text-sm text-ink">{row.original.ai_credits}</div>
-      ),
+      cell: ({ row }) => {
+        // What she can spend: today's daily allowance left, plus credits she bought.
+        if (row.original.daily_credits === null || row.original.purchased_credits === null) {
+          // The balance could not be read: say so rather than showing a zero.
+          return (
+            <div className="text-center text-xs text-stone" title="Credits unavailable">
+              Unavailable
+            </div>
+          );
+        }
+        const credits = describeMemberCredits({
+          daily: row.original.daily_credits,
+          purchased: row.original.purchased_credits,
+        });
+        return (
+          <div className="text-center" title={credits.summary}>
+            <div className="text-sm text-ink">{credits.dailyLabel}</div>
+            <div className="mt-0.5 text-xs text-stone">{credits.purchasedLabel}</div>
+            <span className="sr-only">{credits.summary}</span>
+          </div>
+        );
+      },
     },
     {
       id: "steward",
@@ -121,10 +140,8 @@ export function getMembersColumns({
                 ? "You can't suspend your own account."
                 : undefined
             }
-            onClick={() => {
-              if (!row.original.suspended && !confirmSuspend(memberLabel(row.original))) return;
-              onToggleSuspended(row.original.id, !row.original.suspended);
-            }}
+            // Suspending is confirmed by the page's styled dialog; reinstating is one click.
+            onClick={() => onToggleSuspended(row.original.id, !row.original.suspended)}
           />
           {row.original.id !== currentUserId && (
             <ActionItem

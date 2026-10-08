@@ -29,13 +29,22 @@ import {
   refundTransaction,
   type PaddleRefundAdjustment,
 } from "@/lib/paddle.server";
-import { effectiveDailyCredits, liveDailyAllowance, utcDay } from "@/lib/credit-balance";
+import {
+  isSubscriptionLive,
+  liveDailyAllowance,
+  memberBalanceOrNull,
+  utcDay,
+  type MemberBalance,
+} from "@/lib/credit-balance";
 import {
   GRANT_LOOKUP_FAILED_MESSAGE,
   assertEntitlementSynced,
   describeGrantCreditsError,
+  lookupFailed,
   recordGrantAudit,
+  writeFailed,
 } from "@/lib/credit-grant";
+import { grantSlot } from "@/lib/plan-slot";
 import { transactionAmountCents } from "@/lib/revenue";
 
 export interface MemberBillingPlanOption {
@@ -82,8 +91,12 @@ export interface MemberBillingSummary {
    * Paddle refund/cancel actions.
    */
   manualPlan: boolean;
-  /** What the member can spend today: the live daily allowance plus purchased credits. */
-  credits: { aiCredits: number; purchasedCredits: number; total: number };
+  /**
+   * What the member can spend today: the live daily allowance plus purchased
+   * credits. `null` when the balance read failed, so the dialog says so instead
+   * of showing a zero.
+   */
+  credits: MemberBalance | null;
   plans: MemberBillingPlanOption[];
   latestTransaction: MemberLatestTransaction | null;
   /** Paddle's own note about the last refund on the payment, when there is one. */
@@ -136,10 +149,22 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
         .order("sort_order", { ascending: true }),
     ]);
 
+    // A failed read must not look like "no plan": the dialog would offer Grant
+    // plan to a member who already has one. Throwing shows its retry state.
+    if (subRes.error) throw lookupFailed("billing subscription read", subRes.error);
+    // The balance is one number among several: a failed read must not block the plan
+    // controls, so it is logged and shown as "balance unavailable" (null) instead.
+    if (entRes.error) console.error("[member-billing] credit balance read failed", entRes.error);
+    if (plansRes.error) throw lookupFailed("billing plan list read", plansRes.error);
+
     const plans = plansRes.data ?? [];
     const planTitles = new Map<string, string>();
     const planCredits = new Map<string, number>();
-    const currentSub = subRes.data ?? null;
+    // The newest in-force row, and only while it still entitles the member: a plan
+    // cancelled to run out keeps `active` until Paddle's webhook catches up, so an
+    // ended paid period is no subscription at all (same rule as the credit balance).
+    const newestInForce = subRes.data ?? null;
+    const currentSub = newestInForce && isSubscriptionLive(newestInForce) ? newestInForce : null;
     const planIds = new Set<string>(plans.map((plan) => plan.id));
     if (currentSub) planIds.add(currentSub.plan_id);
 
@@ -217,26 +242,17 @@ export const adminGetMemberBilling = createServerFn({ method: "GET" })
 
     // The member's spendable balance, not the raw columns: a plan member's
     // `ai_credits` can still hold yesterday's leftover until the day resets.
-    const entitlement = entRes.data;
-    const dailyCredits = entitlement
-      ? effectiveDailyCredits({
-          aiCredits: entitlement.ai_credits,
-          creditsResetAt: entitlement.credits_reset_at,
-          planAllowance: liveDailyAllowance(currentSub, planCredits),
-          today: utcDay(),
-        })
-      : 0;
-    const purchasedCredits = entitlement?.purchased_credits ?? 0;
+    const credits = memberBalanceOrNull(
+      entRes,
+      liveDailyAllowance(currentSub, planCredits),
+      utcDay(),
+    );
 
     return {
       paddleConfigured,
       subscription,
       manualPlan: isManualSubscription(currentSub?.paddle_subscription_id),
-      credits: {
-        aiCredits: dailyCredits,
-        purchasedCredits,
-        total: dailyCredits + purchasedCredits,
-      },
+      credits,
       plans: plans.map((plan) => ({
         id: plan.id,
         slug: plan.slug,
@@ -277,8 +293,10 @@ export const adminRefundMemberPlan = createServerFn({ method: "POST" })
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (subError) throw new Error(subError.message);
-    if (!sub) throw new Error("This member has no live subscription to change.");
+    if (subError) throw lookupFailed("subscription lookup before a billing change", subError);
+    if (!sub || !isSubscriptionLive(sub)) {
+      throw new Error("This member has no live subscription to change.");
+    }
     if (isManualSubscription(sub.paddle_subscription_id)) {
       throw new Error(
         "This plan was granted by staff and isn't billed through Paddle, so there is nothing to refund or cancel there. Use the grant form to change or end it.",
@@ -292,7 +310,7 @@ export const adminRefundMemberPlan = createServerFn({ method: "POST" })
         .select("id,title,paddle_price_id,archived_at,is_active")
         .eq("id", data.target_plan_id ?? "")
         .maybeSingle();
-      if (error) throw new Error(error.message);
+      if (error) throw lookupFailed("target plan lookup before a billing change", error);
       if (!plan || plan.archived_at) throw new Error("That plan is no longer available.");
       if (plan.id === sub.plan_id) throw new Error("This member is already on that plan.");
       if (!hasRefundablePrice(plan.paddle_price_id)) {
@@ -537,7 +555,7 @@ export const adminSetMemberPlan = createServerFn({ method: "POST" })
       .select("id")
       .eq("id", data.user_id)
       .maybeSingle();
-    if (profileError) throw new Error(profileError.message);
+    if (profileError) throw lookupFailed("account lookup before a plan grant", profileError);
     if (!profile) throw new Error("That account no longer exists.");
 
     const { data: plan, error: planError } = await supabaseAdmin
@@ -545,28 +563,34 @@ export const adminSetMemberPlan = createServerFn({ method: "POST" })
       .select("id,title,credits_included,archived_at,is_active")
       .eq("id", data.plan_id)
       .maybeSingle();
-    if (planError) throw new Error(planError.message);
+    if (planError) throw lookupFailed("plan lookup before a plan grant", planError);
     if (!plan || plan.archived_at || !plan.is_active)
       throw new Error("That plan is no longer available.");
 
-    const { data: sub, error: subError } = await supabaseAdmin
+    const { data: newest, error: subError } = await supabaseAdmin
       .from("subscriptions")
-      .select("id,plan_id,paddle_subscription_id")
+      .select("id,plan_id,paddle_subscription_id,status,current_period_end,cancel_at_period_end")
       .eq("user_id", data.user_id)
       .in("status", [...CONSOLE_IN_FORCE_STATUSES])
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (subError) throw new Error(subError.message);
+    if (subError) throw lookupFailed("subscription lookup before a plan grant", subError);
 
-    // A billed subscription owns the member's plan slot: granting on top would
-    // leave two live rows and the member app reads the newest one.
-    if (sub && !isManualSubscription(sub.paddle_subscription_id)) {
+    // A live billed subscription owns the member's plan slot: granting on top
+    // would leave two live rows and the member app reads the newest one. A Paddle
+    // plan cancelled to run out whose paid period has ended no longer does, even
+    // while its status still says active.
+    const slot = grantSlot(newest);
+    if (slot.kind === "billed") {
       throw new Error(
         "This member already has a Paddle subscription. Cancel or switch it from the Paddle actions instead of granting a plan on top.",
       );
     }
-    if (sub && sub.plan_id === plan.id) throw new Error("This member is already on that plan.");
+    const sub = slot.kind === "manual" ? slot.sub : null;
+    if (slot.kind === "manual" && slot.live && slot.sub.plan_id === plan.id) {
+      throw new Error("This member is already on that plan.");
+    }
 
     const subscriptionId = sub?.paddle_subscription_id ?? newManualSubscriptionId();
     if (sub) {
@@ -574,7 +598,7 @@ export const adminSetMemberPlan = createServerFn({ method: "POST" })
         .from("subscriptions")
         .update({ plan_id: plan.id, status: "active", cancel_at_period_end: false })
         .eq("id", sub.id);
-      if (error) throw new Error(error.message);
+      if (error) throw writeFailed("plan change", error);
     } else {
       const { error } = await supabaseAdmin.from("subscriptions").insert({
         user_id: data.user_id,
@@ -585,7 +609,7 @@ export const adminSetMemberPlan = createServerFn({ method: "POST" })
         current_period_end: null,
         cancel_at_period_end: false,
       });
-      if (error) throw new Error(error.message);
+      if (error) throw writeFailed("plan grant", error);
     }
 
     // The write the Paddle webhook makes on a renewal, so the member sees the
@@ -650,21 +674,26 @@ export const adminEndMemberPlan = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: sub, error: subError } = await supabaseAdmin
+    const { data: newest, error: subError } = await supabaseAdmin
       .from("subscriptions")
-      .select("id,plan_id,paddle_subscription_id")
+      .select("id,plan_id,paddle_subscription_id,status,current_period_end,cancel_at_period_end")
       .eq("user_id", data.user_id)
       .in("status", [...CONSOLE_IN_FORCE_STATUSES])
       .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (subError) throw new Error(subError.message);
-    if (!sub) throw new Error("This member has no live plan to end.");
-    if (!isManualSubscription(sub.paddle_subscription_id)) {
+    if (subError) throw lookupFailed("subscription lookup before ending a plan", subError);
+
+    // A Paddle plan whose paid period is over is no live plan, so it is not
+    // "billed through Paddle" either: there is nothing left to end or cancel.
+    const slot = grantSlot(newest);
+    if (slot.kind === "free") throw new Error("This member has no live plan to end.");
+    if (slot.kind === "billed") {
       throw new Error(
         "This subscription is billed through Paddle — cancel it from the Paddle actions so the member is handled there too.",
       );
     }
+    const sub = slot.sub;
 
     const { data: plan } = await supabaseAdmin
       .from("subscription_plans")
@@ -677,7 +706,7 @@ export const adminEndMemberPlan = createServerFn({ method: "POST" })
       .from("subscriptions")
       .update({ status: "canceled", cancel_at_period_end: false })
       .eq("id", sub.id);
-    if (error) throw new Error(error.message);
+    if (error) throw writeFailed("plan end", error);
 
     await recordStaffAction(context.userId, "member.plan_ended", "member", data.user_id, {
       plan_id: sub.plan_id,

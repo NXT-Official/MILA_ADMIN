@@ -3,6 +3,7 @@ import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 import { requireEnv } from "@/lib/env";
+import { identify } from "@/lib/observability/observability";
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
@@ -62,6 +63,12 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
     if (profile?.suspended) {
       throw new Error("Forbidden: Account suspended");
     }
+
+    // Label any error from the rest of this request with the caller's id, once
+    // the token is verified and the account is allowed in. The id only: never
+    // the email or other claims. Scoped to this request (src/server.ts gives
+    // each request its own Sentry isolation scope).
+    identify(data.claims.sub);
 
     return next({
       context: {

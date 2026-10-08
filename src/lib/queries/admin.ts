@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { infiniteQueryOptions, queryOptions } from "@tanstack/react-query";
 import { queryKeys } from "@/constants/query-keys";
 import {
   getStaffAuthorization,
@@ -35,10 +35,18 @@ export function adminDashboardQueryOptions() {
   });
 }
 
-export function adminMembersQueryOptions() {
-  return queryOptions({
-    queryKey: queryKeys.adminUsers,
-    queryFn: () => adminListUsers(),
+/**
+ * The members list, 200 at a time. `search` is applied on the server across every
+ * member, not just the ones already loaded. The key starts with `queryKeys.adminUsers`,
+ * so invalidating that key refreshes every search.
+ */
+export function adminMembersQueryOptions(search = "") {
+  return infiniteQueryOptions({
+    queryKey: [...queryKeys.adminUsers, search] as const,
+    queryFn: ({ pageParam }) =>
+      adminListUsers({ data: { page: pageParam, search: search === "" ? undefined : search } }),
+    initialPageParam: 1,
+    getNextPageParam: (last) => last.nextPage ?? undefined,
   });
 }
 

@@ -1,7 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin.functions";
-import { computeMrr } from "@/lib/mrr";
+import { CONSOLE_IN_FORCE_STATUSES } from "@/lib/member-billing";
+import { computeMrr, countLiveSubscriptions } from "@/lib/mrr";
 import { describePaddleError, isPaddleConfigured, paddleListAll } from "@/lib/paddle.server";
 import {
   collectCompletedRevenue,
@@ -38,6 +39,8 @@ export interface AdminAnalyticsSummary {
   activeSubscriptions: number;
   /** Monthly recurring revenue from billed plans, in cents. Granted plans earn nothing. */
   mrrCents: number;
+  /** One monthly total per currency, largest first. Never summed across currencies. */
+  mrrByCurrency: { currency: string; cents: number }[];
   mrrCurrency: string;
   revenue: AdminRevenueSummary;
   totalOutfits: number;
@@ -81,8 +84,8 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
     ] = await Promise.all([
       supabaseAdmin
         .from("subscriptions")
-        .select("plan_id,paddle_subscription_id", { count: "exact" })
-        .eq("status", "active"),
+        .select("plan_id,paddle_subscription_id,status,current_period_end,cancel_at_period_end")
+        .in("status", [...CONSOLE_IN_FORCE_STATUSES]),
       supabaseAdmin.from("outfits").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("concierge_conversations").select("*", { count: "exact", head: true }),
       supabaseAdmin.from("concierge_messages").select("*", { count: "exact", head: true }),
@@ -115,10 +118,7 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
           .in("id", planIds)
       : { data: [] };
 
-    const { cents: mrrCents, currency: mrrCurrency } = computeMrr(
-      activeSubs.data ?? [],
-      plansRes.data ?? [],
-    );
+    const mrr = computeMrr(activeSubs.data ?? [], plansRes.data ?? []);
 
     const revenue = await loadRevenueSummary(platformSettingsRes.data);
 
@@ -138,9 +138,10 @@ export const adminAnalyticsSummary = createServerFn({ method: "GET" })
     const totalAiSpendUsd = (aiSpendRes.data ?? []).reduce((sum, r) => sum + (r.cost_usd ?? 0), 0);
 
     return {
-      activeSubscriptions: activeSubs.count ?? 0,
-      mrrCents,
-      mrrCurrency,
+      activeSubscriptions: countLiveSubscriptions(activeSubs.data ?? []),
+      mrrCents: mrr.cents,
+      mrrCurrency: mrr.currency,
+      mrrByCurrency: mrr.byCurrency,
       revenue,
       totalOutfits: outfitsCount.count ?? 0,
       totalConciergeConversations: conversationsCount.count ?? 0,

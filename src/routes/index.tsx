@@ -4,16 +4,26 @@ import { ShieldCheck } from "lucide-react";
 import { useLoginRedirect } from "@/hooks/use-login-redirect";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoginForm } from "@/components/login/login-form";
+import { safeRedirectPath } from "@/lib/safe-redirect";
+import type { StaffRoute } from "@/lib/authorization";
 
 // The only public page in this app: the sign-in form when signed out, and
 // useLoginRedirect forwards a signed-in staff member to their own home screen.
 export const Route = createFileRoute("/")({
+  // Where the guard was sending them when it stopped at this form. Only a staff
+  // screen's own path survives; anything else (an absolute or protocol-relative
+  // URL included) is dropped here, before any code can read it.
+  // src: @tanstack/router-core/skills/router-core/auth-and-guards/SKILL.md (validate the redirect param)
+  validateSearch: (search: Record<string, unknown>): { redirect?: StaffRoute } => ({
+    redirect: safeRedirectPath(search.redirect),
+  }),
   component: StaffLoginPage,
 });
 
 function StaffLoginPage() {
+  const { redirect } = Route.useSearch();
   // Also refuses a session with no staff role — see useLoginRedirect.
-  useLoginRedirect();
+  useLoginRedirect(redirect);
   const [email, setEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 

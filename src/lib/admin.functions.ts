@@ -12,12 +12,10 @@ import {
 } from "@/lib/authorization";
 import { z } from "zod";
 import { createMemberInputSchema, parseInput, updateMemberInputSchema } from "@/lib/staff-input";
-import {
-  effectiveCredits,
-  latestSubscriptionByUser,
-  liveDailyAllowance,
-  utcDay,
-} from "@/lib/credit-balance";
+import { utcDay } from "@/lib/credit-balance";
+import { PROFILE_MATCH_LIMIT, listMembersPage } from "@/lib/member-list";
+import { resolveMemberCredits } from "@/lib/member-credits";
+import { sanitizeSearch } from "@/lib/search-text";
 import { CONSOLE_IN_FORCE_STATUSES } from "@/lib/member-billing";
 
 type MilaSupabaseClient = SupabaseClient<Database>;
@@ -64,7 +62,12 @@ export interface AdminUserRow {
   is_admin: boolean;
   is_moderator: boolean;
   suspended: boolean;
-  ai_credits: number;
+  /** Spendable total: `daily_credits` + `purchased_credits`; null when the reads failed. */
+  ai_credits: number | null;
+  /** What is left of today's daily allowance; null when it could not be read. */
+  daily_credits: number | null;
+  /** Bought credits; they never expire; null when they could not be read. */
+  purchased_credits: number | null;
   /**
    * True when the account has acted as staff in `staff_audit_log`. Such rows
    * reference the actor with no delete rule, so the database refuses to delete
@@ -74,18 +77,55 @@ export interface AdminUserRow {
   has_staff_activity: boolean;
 }
 
+const ListUsersInput = z.object({
+  page: z.number().int().min(1).max(1000).default(1),
+  search: z.string().trim().max(100).optional(),
+});
+
+export interface AdminUsersPage {
+  rows: AdminUserRow[];
+  /** All accounts when browsing, all matches when searching. */
+  total: number;
+  /** The page "Load more" asks for next, or null at the end. */
+  nextPage: number | null;
+  /** True when a search hit a cap, so the matches shown are not all of them. */
+  truncated: boolean;
+}
+
 export const adminListUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AdminUserRow[]> => {
+  .validator((input: unknown) => ListUsersInput.parse(input ?? {}))
+  .handler(async ({ data: input, context }): Promise<AdminUsersPage> => {
     await assertAdmin(context.supabase, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: usersRes, error: uErr } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 200,
+    const page = await listMembersPage({
+      page: input.page,
+      search: input.search,
+      fetchPage: async (pageNumber, perPage) => {
+        const { data: usersRes, error: uErr } = await supabaseAdmin.auth.admin.listUsers({
+          page: pageNumber,
+          perPage,
+        });
+        if (uErr) throw new Error(uErr.message);
+        return {
+          users: usersRes.users,
+          total: usersRes.total,
+        };
+      },
+      findProfileIds: async (term) => {
+        const safe = sanitizeSearch(term);
+        if (safe === "") return new Set<string>();
+        const { data: matches, error } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .or(`full_name.ilike.%${safe}%,username.ilike.%${safe}%`)
+          .limit(PROFILE_MATCH_LIMIT);
+        if (error) throw new Error("Couldn't search members. Please try again.");
+        return new Set((matches ?? []).map((match) => match.id));
+      },
     });
-    if (uErr) throw new Error(uErr.message);
-    const users = usersRes.users;
+    const users = page.users;
     const ids = users.map((u) => u.id);
 
     const [profilesRes, rolesRes, entRes, subsRes, plansRes, staffActionsRes] = await Promise.all([
@@ -112,28 +152,18 @@ export const adminListUsers = createServerFn({ method: "GET" })
       (rolesRes.data ?? []).filter((r) => r.role === "moderator").map((r) => r.user_id),
     );
     // What each member can spend today, not the raw columns: a plan member's
-    // `ai_credits` can still hold yesterday's leftover until the day resets.
-    const creditsByPlan = new Map(
-      (plansRes.data ?? []).map((plan) => [plan.id, plan.credits_included]),
-    );
-    const latestSubs = latestSubscriptionByUser(subsRes.data ?? []);
-    const today = utcDay();
-    const credMap = new Map(
-      (entRes.data ?? []).map((entitlement) => [
-        entitlement.user_id,
-        effectiveCredits({
-          aiCredits: entitlement.ai_credits,
-          purchasedCredits: entitlement.purchased_credits,
-          creditsResetAt: entitlement.credits_reset_at,
-          planAllowance: liveDailyAllowance(latestSubs.get(entitlement.user_id), creditsByPlan),
-          today,
-        }),
-      ]),
+    // `ai_credits` can still hold yesterday's leftover until the day resets. A failed
+    // read is "unavailable" (null), never 0.
+    const creditsFor = resolveMemberCredits(
+      { entitlements: entRes, subscriptions: subsRes, plans: plansRes },
+      utcDay(),
+      (step, error) => console.error(`[members] credit read failed: ${step}`, error),
     );
     const actedAsStaff = new Set((staffActionsRes.data ?? []).map((row) => row.actor_user_id));
 
-    return users.map((u) => {
+    const rows = users.map((u): AdminUserRow => {
       const profile = pMap.get(u.id);
+      const credits = creditsFor(u.id);
       return {
         id: u.id,
         email: u.email ?? null,
@@ -143,10 +173,16 @@ export const adminListUsers = createServerFn({ method: "GET" })
         is_admin: adminSet.has(u.id),
         is_moderator: moderatorSet.has(u.id),
         suspended: !!profile?.suspended,
-        ai_credits: credMap.get(u.id) ?? 0,
+        ai_credits:
+          credits.daily === null || credits.purchased === null
+            ? null
+            : credits.daily + credits.purchased,
+        daily_credits: credits.daily,
+        purchased_credits: credits.purchased,
         has_staff_activity: actedAsStaff.has(u.id),
       };
     });
+    return { rows, total: page.total, nextPage: page.nextPage, truncated: page.truncated };
   });
 
 const SetRoleInput = z.object({

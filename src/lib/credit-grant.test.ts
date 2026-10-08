@@ -4,9 +4,12 @@ import {
   CREDIT_AUDIT_WARNING,
   GRANT_LOOKUP_FAILED_MESSAGE,
   GRANT_UNCONFIRMED_MESSAGE,
+  PLAN_WRITE_UNCONFIRMED_MESSAGE,
   assertEntitlementSynced,
   describeGrantCreditsError,
+  lookupFailed,
   recordGrantAudit,
+  writeFailed,
 } from "./credit-grant";
 
 const source = (path: string) => readFileSync(new URL(path, import.meta.url), "utf8");
@@ -82,7 +85,7 @@ describe("describeGrantCreditsError", () => {
 
   test("only the lookups that run before any write say nothing was changed", () => {
     expect(GRANT_LOOKUP_FAILED_MESSAGE).toBe(
-      "Couldn't read this member's plan. Nothing was changed — please try again.",
+      "Couldn't read this member's plan. Nothing was changed, please try again.",
     );
     expect(GRANT_UNCONFIRMED_MESSAGE).not.toContain("Nothing was changed");
   });
@@ -98,6 +101,43 @@ describe("assertEntitlementSynced", () => {
       "The plan was granted, but this member has no credit record yet, so their daily credits weren't set.",
     );
     expect(() => assertEntitlementSynced(null)).toThrow("no credit record yet");
+  });
+});
+
+describe("lookupFailed and writeFailed", () => {
+  const raw = {
+    message: 'relation "subscriptions" does not exist',
+    code: "42P01",
+    details: "select * from subscriptions",
+  };
+
+  test("a failed read gives staff the plain lookup sentence and sends the raw cause to the log", () => {
+    const logged: unknown[][] = [];
+    const error = lookupFailed("subscription lookup", raw, (...args) => logged.push(args));
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe(GRANT_LOOKUP_FAILED_MESSAGE);
+    expect(error.message).not.toContain("42P01");
+    expect(error.message).not.toContain("subscriptions");
+    expect(logged).toEqual([["[member-billing] subscription lookup failed", raw]]);
+  });
+
+  test("a failed write never promises nothing changed and never leaks the raw text", () => {
+    const logged: unknown[][] = [];
+    const error = writeFailed("plan update", raw, (...args) => logged.push(args));
+
+    expect(error.message).toBe(PLAN_WRITE_UNCONFIRMED_MESSAGE);
+    expect(error.message).not.toContain("Nothing was changed");
+    expect(error.message).not.toContain("42P01");
+    expect(error.message).not.toMatch(/[a-z]+_[a-z_]+/);
+    expect(logged).toEqual([["[member-billing] plan update failed", raw]]);
+  });
+
+  test("the write sentence tells staff to check the member's plan before trying again", () => {
+    expect(PLAN_WRITE_UNCONFIRMED_MESSAGE).toBe(
+      "Couldn't confirm the plan change. Check this member's plan before trying again.",
+    );
+    expect(PLAN_WRITE_UNCONFIRMED_MESSAGE).not.toMatch(/[\u2013\u2014]/);
   });
 });
 
@@ -152,7 +192,7 @@ describe("billing server functions are wired to the helpers", () => {
   });
 
   test("the billing read uses the effective balance, not the raw columns", () => {
-    expect(fn).toContain("effectiveDailyCredits(");
+    expect(fn).toContain("memberBalanceOrNull(");
     expect(fn).toContain("credits_reset_at");
     expect(fn).not.toContain(
       "(entRes.data?.ai_credits ?? 0) + (entRes.data?.purchased_credits ?? 0)",
@@ -161,9 +201,65 @@ describe("billing server functions are wired to the helpers", () => {
 
   test("the members list uses the effective balance, not the raw columns", () => {
     const list = source("./admin.functions.ts");
-    expect(list).toContain("effectiveCredits(");
+    expect(list).toContain("resolveMemberCredits(");
     expect(list).toContain("credits_reset_at");
     expect(list).not.toContain("entitlement.ai_credits + entitlement.purchased_credits");
+  });
+});
+
+describe("plan and billing errors never read raw database text to staff", () => {
+  const fn = source("./member-billing.functions.ts");
+  const slice = (from: string, to: string) => fn.slice(fn.indexOf(from), fn.indexOf(to));
+  const summary = slice(
+    "export const adminGetMemberBilling",
+    "export interface MemberBillingActionResult",
+  );
+  const refund = slice("export const adminRefundMemberPlan", "export interface GrantCreditsResult");
+  const setPlan = slice("export const adminSetMemberPlan", "export interface MemberPlanEndResult");
+  const endPlan = fn.slice(fn.indexOf("export const adminEndMemberPlan"));
+
+  test("no handler throws a supabase error's message", () => {
+    expect(fn).not.toMatch(/new Error\(\s*\w+\.message/);
+  });
+
+  test("every read that can fail goes through lookupFailed", () => {
+    // The subscription and plan reads block the dialog; the balance read does not.
+    expect(summary.split("lookupFailed(").length - 1).toBe(2);
+    expect(refund.split("lookupFailed(").length - 1).toBe(2);
+    expect(setPlan.split("lookupFailed(").length - 1).toBe(3);
+    expect(endPlan.split("lookupFailed(").length - 1).toBe(1);
+  });
+
+  test("every plan write that can fail goes through writeFailed", () => {
+    expect(setPlan.split("writeFailed(").length - 1).toBe(2);
+    expect(endPlan.split("writeFailed(").length - 1).toBe(1);
+  });
+});
+
+describe("an ended run-out plan is not a live plan", () => {
+  const fn = source("./member-billing.functions.ts");
+  const slice = (from: string, to: string) => fn.slice(fn.indexOf(from), fn.indexOf(to));
+  const summary = slice(
+    "export const adminGetMemberBilling",
+    "export interface MemberBillingActionResult",
+  );
+  const refund = slice("export const adminRefundMemberPlan", "export interface GrantCreditsResult");
+  const setPlan = slice("export const adminSetMemberPlan", "export interface MemberPlanEndResult");
+  const endPlan = fn.slice(fn.indexOf("export const adminEndMemberPlan"));
+
+  test("the billing read treats it as no subscription, so the dialog offers Grant plan", () => {
+    expect(summary).toContain("isSubscriptionLive(");
+  });
+
+  test("granting asks who owns the slot, so a lapsed Paddle row no longer blocks it", () => {
+    expect(setPlan).toContain("grantSlot(");
+    expect(setPlan).toContain("current_period_end");
+    expect(setPlan).toContain("cancel_at_period_end");
+  });
+
+  test("ending a plan and refunding use the same rule", () => {
+    expect(endPlan).toContain("grantSlot(");
+    expect(refund).toContain("isSubscriptionLive(");
   });
 });
 
@@ -204,5 +300,36 @@ describe("recordStaffAction", () => {
       'throw new Error("The action succeeded, but its audit record could not be saved.")',
     );
     expect(insertFailed.indexOf("console.error(")).toBeLessThan(insertFailed.indexOf("throw new"));
+  });
+});
+
+test("no admin message carries an em or en dash", () => {
+  const dash = new RegExp(`[${String.fromCodePoint(0x2013)}${String.fromCodePoint(0x2014)}]`);
+  expect(GRANT_LOOKUP_FAILED_MESSAGE).not.toMatch(dash);
+});
+
+describe("a failed balance read does not block the billing dialog", () => {
+  const fn = source("./member-billing.functions.ts");
+  const summary = fn.slice(
+    fn.indexOf("export const adminGetMemberBilling"),
+    fn.indexOf("export interface MemberBillingActionResult"),
+  );
+
+  test("the server answers with a null balance instead of throwing", () => {
+    expect(summary).not.toContain("billing credit balance read");
+    expect(summary).toContain("memberBalanceOrNull(");
+    expect(fn).toContain("credits: MemberBalance | null");
+  });
+
+  test("the failure is still written to the server log", () => {
+    expect(summary).toContain("console.error(");
+  });
+
+  test("both dialogs say the balance is unavailable", () => {
+    const billing = source("../components/admin/member-billing-dialog.tsx");
+    const credits = source("../components/admin/member-credits-dialog.tsx");
+    expect(billing).toContain("Credit balance unavailable");
+    expect(credits).toContain("Balance unavailable");
+    expect(credits).not.toContain("data.credits.aiCredits");
   });
 });

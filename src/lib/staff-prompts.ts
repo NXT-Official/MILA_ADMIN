@@ -23,3 +23,21 @@ export function confirmSuspend(
 ): boolean {
   return ask(`Suspend ${memberName}? They won't be able to sign in until you reinstate them.`);
 }
+
+/**
+ * The words of the styled suspend confirmation (`MemberSuspendDialog`), kept
+ * here so the copy is testable. The console no longer asks with the browser's
+ * native confirm; `confirmSuspend` above stays as the injected-answer helper.
+ */
+export function suspendConfirmCopy(memberName: string): {
+  title: string;
+  description: string;
+  confirmLabel: string;
+} {
+  return {
+    title: `Suspend ${memberName}?`,
+    description:
+      "They won't be able to sign in until you reinstate them. Nothing is deleted, and you can reinstate them from the same menu.",
+    confirmLabel: "Suspend",
+  };
+}

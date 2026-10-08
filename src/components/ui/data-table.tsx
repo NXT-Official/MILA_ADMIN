@@ -32,6 +32,8 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean;
   emptyMessage?: string;
   action?: React.ReactNode;
+  /** Told whenever the search box changes, for a table that also searches on the server. */
+  onSearchChange?: (value: string) => void;
 }
 
 export function DataTable<TData, TValue>({
@@ -44,6 +46,7 @@ export function DataTable<TData, TValue>({
   isLoading,
   emptyMessage = "No results.",
   action,
+  onSearchChange,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = React.useState("");
@@ -71,7 +74,10 @@ export function DataTable<TData, TValue>({
           <Input
             leadingIcon={Search}
             value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
+            onChange={(e) => {
+              setGlobalFilter(e.target.value);
+              onSearchChange?.(e.target.value);
+            }}
             placeholder={searchPlaceholder}
             className="max-w-sm bg-background border-porcelain/60 rounded-full text-sm"
           />

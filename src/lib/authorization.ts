@@ -16,6 +16,8 @@ export const APP_PERMISSIONS = [
   "support.view",
   "support.manage",
   "subscriptionPlans.manage",
+  // The FAQs (Training) knowledge base. Every staff role reads it.
+  "faqs.view",
   // Who paid what, when, and the two PDFs for it.
   "subscriptions.view",
   // Emails every member about a Mila update.
@@ -33,6 +35,7 @@ export const ROLE_PERMISSIONS = {
     "moderation.manage",
     "support.view",
     "support.manage",
+    "faqs.view",
   ],
 } as const satisfies Record<AppRole, readonly AppPermission[]>;
 
@@ -54,6 +57,8 @@ export const STAFF_ROUTE_PERMISSIONS = {
   "/ai-settings": "aiSettings.manage",
   "/moderation": "moderation.view",
   "/support": "support.view",
+  // Open to every role, so it sits after the screens that decide `staffHome`.
+  "/faqs": "faqs.view",
   // Every staff member can manage their own password — this is the suite's
   // base floor permission, not an admin-only one.
   "/settings": "admin.access",

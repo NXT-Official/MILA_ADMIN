@@ -5,6 +5,7 @@ import {
   isSubscriptionLive,
   latestSubscriptionByUser,
   liveDailyAllowance,
+  memberBalanceOrNull,
   utcDay,
 } from "./credit-balance";
 
@@ -186,5 +187,33 @@ describe("latestSubscriptionByUser", () => {
       { user_id: "u1", plan_id: "old", updated_at: "2026-09-01T00:00:00Z" },
     ];
     expect(latestSubscriptionByUser(rows).get("u1")?.plan_id).toBe("new");
+  });
+});
+
+describe("memberBalanceOrNull", () => {
+  const entitlement = {
+    ai_credits: 3,
+    purchased_credits: 10,
+    credits_reset_at: TODAY,
+  };
+
+  test("a good read gives the daily part, the purchased part and their sum", () => {
+    expect(memberBalanceOrNull({ data: entitlement, error: null }, 20, TODAY)).toEqual({
+      aiCredits: 3,
+      purchasedCredits: 10,
+      total: 13,
+    });
+  });
+
+  test("a failed read is no balance at all, never zero credits", () => {
+    expect(memberBalanceOrNull({ data: null, error: { message: "boom" } }, 20, TODAY)).toBeNull();
+  });
+
+  test("a member with no credit row has a real balance of zero", () => {
+    expect(memberBalanceOrNull({ data: null, error: null }, 20, TODAY)).toEqual({
+      aiCredits: 0,
+      purchasedCredits: 0,
+      total: 0,
+    });
   });
 });

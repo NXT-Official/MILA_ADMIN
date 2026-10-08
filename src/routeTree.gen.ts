@@ -18,6 +18,7 @@ import { Route as AuthedAnalyticsRouteImport } from './routes/_authed/analytics'
 import { Route as AuthedAnnouncementsRouteImport } from './routes/_authed/announcements'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedDatabaseRouteImport } from './routes/_authed/database'
+import { Route as AuthedFaqsRouteImport } from './routes/_authed/faqs'
 import { Route as AuthedMembersRouteImport } from './routes/_authed/members'
 import { Route as AuthedModerationRouteImport } from './routes/_authed/moderation'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
@@ -25,6 +26,7 @@ import { Route as AuthedShopRouteImport } from './routes/_authed/shop'
 import { Route as AuthedSubscriptionPlansRouteImport } from './routes/_authed/subscription-plans'
 import { Route as AuthedSubscriptionsRouteImport } from './routes/_authed/subscriptions'
 import { Route as AuthedSupportRouteImport } from './routes/_authed/support'
+import { Route as AuthedFaqsSlugRouteImport } from './routes/_authed/faqs_.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +72,11 @@ const AuthedDatabaseRoute = AuthedDatabaseRouteImport.update({
   path: '/database',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedFaqsRoute = AuthedFaqsRouteImport.update({
+  id: '/faqs',
+  path: '/faqs',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedMembersRoute = AuthedMembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -105,6 +112,11 @@ const AuthedSupportRoute = AuthedSupportRouteImport.update({
   path: '/support',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedFaqsSlugRoute = AuthedFaqsSlugRouteImport.update({
+  id: '/faqs_/$slug',
+  path: '/faqs/$slug',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/announcements': typeof AuthedAnnouncementsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/database': typeof AuthedDatabaseRoute
+  '/faqs': typeof AuthedFaqsRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
   '/settings': typeof AuthedSettingsRoute
@@ -122,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/subscriptions': typeof AuthedSubscriptionsRoute
   '/support': typeof AuthedSupportRoute
+  '/faqs/$slug': typeof AuthedFaqsSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -132,6 +146,7 @@ export interface FileRoutesByTo {
   '/announcements': typeof AuthedAnnouncementsRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/database': typeof AuthedDatabaseRoute
+  '/faqs': typeof AuthedFaqsRoute
   '/members': typeof AuthedMembersRoute
   '/moderation': typeof AuthedModerationRoute
   '/settings': typeof AuthedSettingsRoute
@@ -139,6 +154,7 @@ export interface FileRoutesByTo {
   '/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/subscriptions': typeof AuthedSubscriptionsRoute
   '/support': typeof AuthedSupportRoute
+  '/faqs/$slug': typeof AuthedFaqsSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -151,6 +167,7 @@ export interface FileRoutesById {
   '/_authed/announcements': typeof AuthedAnnouncementsRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/database': typeof AuthedDatabaseRoute
+  '/_authed/faqs': typeof AuthedFaqsRoute
   '/_authed/members': typeof AuthedMembersRoute
   '/_authed/moderation': typeof AuthedModerationRoute
   '/_authed/settings': typeof AuthedSettingsRoute
@@ -158,6 +175,7 @@ export interface FileRoutesById {
   '/_authed/subscription-plans': typeof AuthedSubscriptionPlansRoute
   '/_authed/subscriptions': typeof AuthedSubscriptionsRoute
   '/_authed/support': typeof AuthedSupportRoute
+  '/_authed/faqs_/$slug': typeof AuthedFaqsSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -170,6 +188,7 @@ export interface FileRouteTypes {
     | '/announcements'
     | '/dashboard'
     | '/database'
+    | '/faqs'
     | '/members'
     | '/moderation'
     | '/settings'
@@ -177,6 +196,7 @@ export interface FileRouteTypes {
     | '/subscription-plans'
     | '/subscriptions'
     | '/support'
+    | '/faqs/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -187,6 +207,7 @@ export interface FileRouteTypes {
     | '/announcements'
     | '/dashboard'
     | '/database'
+    | '/faqs'
     | '/members'
     | '/moderation'
     | '/settings'
@@ -194,6 +215,7 @@ export interface FileRouteTypes {
     | '/subscription-plans'
     | '/subscriptions'
     | '/support'
+    | '/faqs/$slug'
   id:
     | '__root__'
     | '/'
@@ -205,6 +227,7 @@ export interface FileRouteTypes {
     | '/_authed/announcements'
     | '/_authed/dashboard'
     | '/_authed/database'
+    | '/_authed/faqs'
     | '/_authed/members'
     | '/_authed/moderation'
     | '/_authed/settings'
@@ -212,6 +235,7 @@ export interface FileRouteTypes {
     | '/_authed/subscription-plans'
     | '/_authed/subscriptions'
     | '/_authed/support'
+    | '/_authed/faqs_/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -286,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDatabaseRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/faqs': {
+      id: '/_authed/faqs'
+      path: '/faqs'
+      fullPath: '/faqs'
+      preLoaderRoute: typeof AuthedFaqsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/members': {
       id: '/_authed/members'
       path: '/members'
@@ -335,6 +366,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedSupportRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/faqs_/$slug': {
+      id: '/_authed/faqs_/$slug'
+      path: '/faqs/$slug'
+      fullPath: '/faqs/$slug'
+      preLoaderRoute: typeof AuthedFaqsSlugRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
@@ -344,6 +382,7 @@ interface AuthedRouteChildren {
   AuthedAnnouncementsRoute: typeof AuthedAnnouncementsRoute
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedDatabaseRoute: typeof AuthedDatabaseRoute
+  AuthedFaqsRoute: typeof AuthedFaqsRoute
   AuthedMembersRoute: typeof AuthedMembersRoute
   AuthedModerationRoute: typeof AuthedModerationRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
@@ -351,6 +390,7 @@ interface AuthedRouteChildren {
   AuthedSubscriptionPlansRoute: typeof AuthedSubscriptionPlansRoute
   AuthedSubscriptionsRoute: typeof AuthedSubscriptionsRoute
   AuthedSupportRoute: typeof AuthedSupportRoute
+  AuthedFaqsSlugRoute: typeof AuthedFaqsSlugRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
@@ -359,6 +399,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedAnnouncementsRoute: AuthedAnnouncementsRoute,
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedDatabaseRoute: AuthedDatabaseRoute,
+  AuthedFaqsRoute: AuthedFaqsRoute,
   AuthedMembersRoute: AuthedMembersRoute,
   AuthedModerationRoute: AuthedModerationRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
@@ -366,6 +407,7 @@ const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedSubscriptionPlansRoute: AuthedSubscriptionPlansRoute,
   AuthedSubscriptionsRoute: AuthedSubscriptionsRoute,
   AuthedSupportRoute: AuthedSupportRoute,
+  AuthedFaqsSlugRoute: AuthedFaqsSlugRoute,
 }
 
 const AuthedRouteWithChildren =

@@ -1,5 +1,6 @@
 import { Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { staffSectionOf } from "@/lib/staff-nav";
 
 const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   "/dashboard": { title: "Dashboard", subtitle: "Overview & analytics" },
@@ -25,6 +26,7 @@ const PAGE_META: Record<string, { title: string; subtitle: string }> = {
   },
   "/moderation": { title: "Moderation", subtitle: "Review and moderate the feed" },
   "/support": { title: "Support", subtitle: "Help desk & feedback" },
+  "/faqs": { title: "FAQs (Training)", subtitle: "Answers to the questions members ask" },
 };
 
 export function StaffHeader({
@@ -38,7 +40,7 @@ export function StaffHeader({
   sidebarOpen: boolean;
   onOpenSidebar: () => void;
 }) {
-  const meta = PAGE_META[path] ?? { title: "Staff", subtitle: "" };
+  const meta = PAGE_META[staffSectionOf(path)] ?? { title: "Staff", subtitle: "" };
 
   return (
     <header className="shrink-0 border-b border-porcelain/60 bg-background/80 backdrop-blur px-5 md:px-8">

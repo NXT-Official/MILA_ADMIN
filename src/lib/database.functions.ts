@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { assertAdmin } from "@/lib/admin.functions";
+import { sanitizeSearch } from "@/lib/search-text";
 import type { Database, Json } from "@/integrations/supabase/types";
 
 const PAGE_SIZE = 50;
@@ -111,10 +112,8 @@ export const SEARCH_COLUMNS: Record<BrowsableTable, readonly string[]> = {
   rate_limit_buckets: ["key"],
 };
 
-/** Commas, parens and quotes would break PostgREST's `or` filter grammar. */
-export function sanitizeSearch(term: string): string {
-  return term.replace(/[,()\\*"]/g, " ").trim();
-}
+// Shared with the members list; re-exported so existing imports keep working.
+export { sanitizeSearch };
 
 const BrowseTableInput = z.object({
   table: z.enum(BROWSABLE_TABLES),

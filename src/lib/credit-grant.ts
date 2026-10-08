@@ -26,7 +26,7 @@ export async function recordGrantAudit(
  * so staff can be told it is safe to try again.
  */
 export const GRANT_LOOKUP_FAILED_MESSAGE =
-  "Couldn't read this member's plan. Nothing was changed — please try again.";
+  "Couldn't read this member's plan. Nothing was changed, please try again.";
 
 /**
  * An error from the ledger call we can't read — a dropped connection or a lost
@@ -61,4 +61,40 @@ export function assertEntitlementSynced(rows: readonly { user_id: string }[] | n
       "The plan was granted, but this member has no credit record yet, so their daily credits weren't set.",
     );
   }
+}
+
+/**
+ * An error from a plan write we can't read. A dropped connection can arrive
+ * after the write committed, so this never promises that nothing changed.
+ */
+export const PLAN_WRITE_UNCONFIRMED_MESSAGE =
+  "Couldn't confirm the plan change. Check this member's plan before trying again.";
+
+type CauseLogger = (message: string, cause: unknown) => void;
+
+/**
+ * A read that failed before anything was written. The raw cause (a table name,
+ * a Postgres code) goes to the server log; staff get the plain sentence and the
+ * reassurance that nothing changed.
+ */
+export function lookupFailed(
+  step: string,
+  cause: unknown,
+  log: CauseLogger = (message, detail) => console.error(message, detail),
+): Error {
+  log(`[member-billing] ${step} failed`, cause);
+  return new Error(GRANT_LOOKUP_FAILED_MESSAGE);
+}
+
+/**
+ * A plan write that returned an error. The raw cause goes to the server log;
+ * staff are told to check the member's plan, since the write may have landed.
+ */
+export function writeFailed(
+  step: string,
+  cause: unknown,
+  log: CauseLogger = (message, detail) => console.error(message, detail),
+): Error {
+  log(`[member-billing] ${step} failed`, cause);
+  return new Error(PLAN_WRITE_UNCONFIRMED_MESSAGE);
 }

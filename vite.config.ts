@@ -5,8 +5,15 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { nitro } from "nitro/vite";
 import mkcert from "vite-plugin-mkcert";
+import { sentryTanstackStart } from "@sentry/tanstackstart-react/vite";
+import { sentryConnectSources } from "./src/lib/observability/csp";
 
-function buildCsp(supabaseUrl: string | undefined): string {
+/** A set, non-blank environment variable, or undefined. */
+function envValue(name: string): string | undefined {
+  return process.env[name]?.trim() || undefined;
+}
+
+function buildCsp(supabaseUrl: string | undefined, sentryDsn: string | undefined): string {
   let supabaseOrigin = "";
   try {
     supabaseOrigin = supabaseUrl ? new URL(supabaseUrl).origin : "";
@@ -25,6 +32,8 @@ function buildCsp(supabaseUrl: string | undefined): string {
       ...(supabaseOrigin ? [supabaseOrigin] : []),
       "https://hcaptcha.com",
       "https://*.hcaptcha.com",
+      // Browser error reports (src/lib/observability). Harmless when no DSN is set.
+      ...sentryConnectSources(sentryDsn),
       // Sentry — error monitoring. The client SDK posts event envelopes to
       // the ingest host; without these the CSP silently drops them. Update
       // if the org ever moves regions.
@@ -52,14 +61,38 @@ export default defineConfig(({ command, mode }) => {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     // The staff suite has no camera, mic, geolocation or payment surface.
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
-    "Content-Security-Policy": buildCsp(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL),
+    "Content-Security-Policy": buildCsp(
+      process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL,
+      process.env.VITE_SENTRY_DSN,
+    ),
     "X-Robots-Tag": "noindex, nofollow",
     ...(isProd
       ? { "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload" }
       : {}),
   };
 
+  // Error reporting (src/lib/observability). The browser bundle can only read
+  // values fixed at build time, so the deployment's environment and git SHA are
+  // baked in here; an explicit VITE_/SENTRY_ value wins over Vercel's.
+  const sentryEnvironment =
+    envValue("VITE_SENTRY_ENVIRONMENT") ??
+    envValue("SENTRY_ENVIRONMENT") ??
+    envValue("VERCEL_ENV") ??
+    mode;
+  const sentryRelease =
+    envValue("VITE_SENTRY_RELEASE") ??
+    envValue("SENTRY_RELEASE") ??
+    envValue("VERCEL_GIT_COMMIT_SHA");
+  // Source maps upload only when a token is present; otherwise the build runs
+  // exactly as before, with no network calls to Sentry.
+  const sentryAuthToken = envValue("SENTRY_AUTH_TOKEN");
+
   return {
+    // src: node_modules/vite/dist/node/chunks/config.js (userDefineEnv: define keys under import.meta.env.) · 7.3.6
+    define: {
+      "import.meta.env.VITE_SENTRY_ENVIRONMENT": JSON.stringify(sentryEnvironment),
+      "import.meta.env.VITE_SENTRY_RELEASE": JSON.stringify(sentryRelease ?? ""),
+    },
     // 8080 is the member app; both have to run side by side in dev.
     server: { host: "::", port: 8081 },
     // The entry chunk crossed vite's 500 kB warning by carrying every vendor
@@ -131,6 +164,37 @@ export default defineConfig(({ command, mode }) => {
         : []),
       viteReact(),
       mkcert(),
+      // Must be the last plugin.
+      // src: https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/manual-setup/#add-the-sentrytanstackstart-vite-plugin · 10.75.2
+      // src: node_modules/@sentry/tanstackstart-react/build/esm/vite/sentryTanstackStart.js · 10.75.2
+      sentryTanstackStart({
+        org: envValue("SENTRY_ORG"),
+        project: envValue("SENTRY_PROJECT"),
+        authToken: sentryAuthToken,
+        telemetry: false,
+        // Server-function spans come from the global middlewares in src/start.ts;
+        // the auto-instrumenter would rewrite every *.functions.ts file to add more.
+        autoInstrumentMiddleware: false,
+        sourcemaps: {
+          disable: sentryAuthToken ? false : "disable-upload",
+          // Hidden maps are generated only for the upload, then removed so they
+          // are never served next to the bundle.
+          filesToDeleteAfterUpload: [
+            "./.output/**/*.map",
+            "./.vercel/output/**/*.map",
+            "./dist/**/*.map",
+          ],
+        },
+        release: {
+          name: sentryRelease,
+          create: Boolean(sentryAuthToken),
+          finalize: Boolean(sentryAuthToken),
+        },
+        // A Sentry outage or a bad token must never fail a deploy.
+        errorHandler: (error) => {
+          console.warn(`[sentry] ${error.message}. The build continues without source maps.`);
+        },
+      }),
     ],
   };
 });

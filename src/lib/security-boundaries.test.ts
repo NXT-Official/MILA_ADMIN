@@ -8,7 +8,11 @@ const source = (path: string) => readFileSync(new URL(path, import.meta.url), "u
 test("the suite floor is admin.access and a lapsed session lands on the sign-in form", () => {
   const authed = source("../routes/_authed.tsx");
   expect(authed).toContain("!viewer.canAccessStaffArea");
-  expect(authed).toContain('redirect({ to: "/", replace: true })');
+  // Both exits (no session, no staff role) go to the sign-in form, replacing the
+  // history entry. The redirect itself lives in `toSignIn` — see safe-redirect.test.ts.
+  expect(authed).toContain('to: "/"');
+  expect(authed).toContain("replace: true");
+  expect(authed.match(/throw toSignIn\(/g)?.length).toBe(2);
   // Client-only, or the server SSRs the match as success and the guard never runs.
   expect(authed).toContain("ssr: false");
 });
@@ -28,6 +32,7 @@ test("every staff screen re-checks its own permission in its route file", () => 
     "/ai-settings": "ai-settings.tsx",
     "/moderation": "moderation.tsx",
     "/support": "support.tsx",
+    "/faqs": "faqs.tsx",
     "/settings": "settings.tsx",
   };
   for (const route of STAFF_ROUTES) {
@@ -37,6 +42,16 @@ test("every staff screen re-checks its own permission in its route file", () => 
       `requireStaffRoutePermission(context.queryClient, "${STAFF_ROUTE_PERMISSIONS[route]}")`,
     );
   }
+});
+
+test("an article page re-checks the FAQs permission, so deep-linking past the list is no way round it", () => {
+  // The article route is not in STAFF_ROUTES (its path has a parameter), so the
+  // loop above never reaches it.
+  const file = source("../routes/_authed/faqs_.$slug.tsx");
+  expect(file).toContain('createFileRoute("/_authed/faqs_/$slug")');
+  expect(file).toContain(
+    `requireStaffRoutePermission(context.queryClient, "${STAFF_ROUTE_PERMISSIONS["/faqs"]}")`,
+  );
 });
 
 test("a sign-in by a non-staff account is dropped, not redirected", () => {

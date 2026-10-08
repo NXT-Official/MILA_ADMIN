@@ -88,14 +88,14 @@ export function createMailer(deps: MailerDeps = {}) {
 
         if (!response.ok) {
           const detail = payload?.message ?? payload?.name ?? `HTTP ${response.status}`;
-          console.error("[mailer] send failed", { to: message.to, detail });
+          console.error("[mailer] send failed", { to: message.to, error: detail });
           return { sent: false, error: detail };
         }
 
         return { sent: true, id: payload?.id };
       } catch (error) {
         const detail = error instanceof Error ? error.message : String(error);
-        console.error("[mailer] send threw", { to: message.to, detail });
+        console.error("[mailer] send threw", { to: message.to, error: detail });
         return { sent: false, error: detail };
       }
     },

@@ -49,7 +49,10 @@ export function MemberCreditsDialog({
 
   const parsed = Number(amount);
   const valid = Number.isInteger(parsed) && parsed >= 1 && parsed <= 100_000;
-  const balance = data?.credits.total ?? member?.ai_credits ?? 0;
+  // A failed balance read comes back as null: say so rather than showing a stale or zero figure.
+  const credits = data?.credits ?? null;
+  const balance = credits?.total ?? member?.ai_credits ?? null;
+  const balanceUnavailable = (!!data && data.credits === null) || balance === null;
 
   return (
     <Dialog open={!!member} onOpenChange={onOpenChange}>
@@ -64,11 +67,17 @@ export function MemberCreditsDialog({
 
         <div className="space-y-4">
           <p className="text-xs text-stone">
-            Current balance: <span className="text-ink">{balance}</span> credits
-            {data && (
+            {balanceUnavailable ? (
+              <>Balance unavailable right now. You can still add credits.</>
+            ) : (
               <>
-                {" "}
-                ({data.credits.aiCredits} plan + {data.credits.purchasedCredits} purchased)
+                Current balance: <span className="text-ink">{balance}</span> credits
+                {credits && (
+                  <>
+                    {" "}
+                    ({credits.aiCredits} left today + {credits.purchasedCredits} purchased)
+                  </>
+                )}
               </>
             )}
           </p>

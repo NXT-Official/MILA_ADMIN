@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { getMembersColumns } from "@/components/admin/members-columns";
 import { MemberFormDialog } from "@/components/admin/member-form-dialog";
 import { MemberDeleteDialog } from "@/components/admin/member-delete-dialog";
+import { MemberSuspendDialog } from "@/components/admin/member-suspend-dialog";
 import {
   MemberBillingDialog,
   type BillingDialogSubmission,
@@ -29,6 +30,8 @@ import {
   adminSetMemberPlan,
 } from "@/lib/member-billing.functions";
 import { adminMembersQueryOptions } from "@/lib/queries/admin";
+import { mergeMemberPages } from "@/lib/member-list";
+import { resolveSuspendRequest } from "@/lib/suspend-request";
 import { requireStaffRoutePermission } from "@/lib/staff-route";
 import {
   RoleConfirmationDialog,
@@ -53,6 +56,10 @@ function MembersPage() {
   const [rolePending, setRolePending] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminUserRow | null>(null);
   const [deletePending, setDeletePending] = useState(false);
+  // The target outlives the dialog, so its title does not flicker while it fades out.
+  const [suspendTarget, setSuspendTarget] = useState<AdminUserRow | null>(null);
+  const [suspendOpen, setSuspendOpen] = useState(false);
+  const [suspendPending, setSuspendPending] = useState(false);
   const [billingTarget, setBillingTarget] = useState<AdminUserRow | null>(null);
   const [billingPending, setBillingPending] = useState(false);
   const [creditsTarget, setCreditsTarget] = useState<AdminUserRow | null>(null);
@@ -62,7 +69,21 @@ function MembersPage() {
   const endPlan = useServerFn(adminEndMemberPlan);
   const grantCredits = useServerFn(adminGrantStylingCredits);
 
-  const { data, isLoading } = useQuery(adminMembersQueryOptions());
+  // Search runs on the server across every member; the table also filters what is loaded.
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
+
+  const members = useInfiniteQuery(adminMembersQueryOptions(search));
+  const { isLoading } = members;
+  const data = useMemo(
+    () => (members.data ? mergeMemberPages(members.data.pages) : undefined),
+    [members.data],
+  );
+  const lastPage = members.data?.pages[members.data.pages.length - 1];
 
   function openCreate() {
     setEditingMember(undefined);
@@ -107,14 +128,45 @@ function MembersPage() {
     }
   }
 
-  async function toggleSuspended(id: string, suspended: boolean) {
+  /** True when the status changed; the failure has already been shown to staff. */
+  async function applySuspended(id: string, suspended: boolean): Promise<boolean> {
     try {
       await setSuspended({ data: { user_id: id, suspended } });
       toast.success(suspended ? "Member suspended." : "Member reinstated.");
-      qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      return true;
     } catch (e) {
       toast.error(errorMessage(e, "Couldn't update status."));
+      return false;
     }
+  }
+
+  /** Suspending asks first, in the styled dialog; reinstating is a single click. */
+  function requestSuspendToggle(id: string, suspended: boolean) {
+    const request = resolveSuspendRequest({
+      rows: data ?? [],
+      id,
+      suspended,
+      currentUserId: user?.id,
+    });
+    if (request.kind === "reinstate") {
+      void applySuspended(id, false);
+    } else if (request.kind === "confirm") {
+      setSuspendTarget(request.member);
+      setSuspendOpen(true);
+    } else if (request.kind === "self") {
+      toast.error("You can't suspend your own account.");
+    } else {
+      toast.error("That member is no longer in the list. Refresh the page and try again.");
+    }
+  }
+
+  async function confirmSuspension() {
+    if (!suspendTarget) return;
+    setSuspendPending(true);
+    const done = await applySuspended(suspendTarget.id, true);
+    setSuspendPending(false);
+    if (done) setSuspendOpen(false);
   }
 
   async function confirmDelete() {
@@ -168,6 +220,13 @@ function MembersPage() {
       setBillingTarget(null);
     } catch (e) {
       toast.error(errorMessage(e, "Couldn't update this member's billing."));
+      // A lost response can follow a change that landed, and a Paddle refund may
+      // already have left before the plan change failed. Refresh so what staff see
+      // is the real state before they decide to try again.
+      await qc.invalidateQueries({ queryKey: queryKeys.adminUsers });
+      qc.invalidateQueries({ queryKey: queryKeys.adminMemberBilling(target.id) });
+      if (submission.kind === "paddle")
+        qc.invalidateQueries({ queryKey: queryKeys.adminAnalytics });
     } finally {
       setBillingPending(false);
     }
@@ -203,7 +262,7 @@ function MembersPage() {
     currentUserId: user?.id,
     pendingRoleChange: rolePending,
     onToggleRole: requestRoleChange,
-    onToggleSuspended: toggleSuspended,
+    onToggleSuspended: requestSuspendToggle,
     onEdit: openEdit,
     onDelete: setDeleteTarget,
     onManageBilling: setBillingTarget,
@@ -230,7 +289,8 @@ function MembersPage() {
         searchPlaceholder="Search by name, username, or email"
         searchText={(u) => `${u.full_name ?? ""} ${u.username ?? ""} ${u.email ?? ""}`}
         countLabel="members"
-        emptyMessage="No members found."
+        emptyMessage={members.isError ? "Couldn't load members." : "No members found."}
+        onSearchChange={setSearchInput}
         action={
           <Button size="sm" className="h-9 text-xs gap-1.5" onClick={openCreate}>
             <Plus className="size-3.5" />
@@ -238,6 +298,37 @@ function MembersPage() {
           </Button>
         }
       />
+
+      {members.isError && (
+        <div role="alert" className="mt-3 flex items-center gap-3 text-sm text-stone">
+          <span>Couldn't load members.</span>
+          <Button size="md" variant="outline" onClick={() => members.refetch()}>
+            Try again
+          </Button>
+        </div>
+      )}
+      {data && lastPage && (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <p className="text-xs text-stone" role="status">
+            Showing {data.length} of {lastPage.total} {search === "" ? "members" : "matches"}
+          </p>
+          {lastPage.truncated && (
+            <p className="text-xs text-stone" role="status">
+              Showing the first {lastPage.total} matches. Refine your search to narrow them down.
+            </p>
+          )}
+          {members.hasNextPage && (
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => members.fetchNextPage()}
+              disabled={members.isFetchingNextPage}
+            >
+              {members.isFetchingNextPage ? "Loading…" : "Load more members"}
+            </Button>
+          )}
+        </div>
+      )}
 
       <MemberFormDialog
         open={formOpen}
@@ -256,6 +347,13 @@ function MembersPage() {
         pending={deletePending}
         onOpenChange={(open) => !open && !deletePending && setDeleteTarget(null)}
         onConfirm={confirmDelete}
+      />
+      <MemberSuspendDialog
+        member={suspendTarget}
+        open={suspendOpen}
+        pending={suspendPending}
+        onOpenChange={(open) => !open && !suspendPending && setSuspendOpen(false)}
+        onConfirm={confirmSuspension}
       />
       <MemberBillingDialog
         member={billingTarget}

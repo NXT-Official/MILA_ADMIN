@@ -1,0 +1,29 @@
+src/content/faqs/generations-and-tab-switching.md
+  s_755964b2e0c3da::t_7b5670e24784ed 33
+src/content/faqs/glossary.md
+  s_755964b2e0c3da::t_7b5670e24784ed 123
+src/content/faqs/adding-credits.md
+  s_755964b2e0c3da::t_7b5670e24784ed 79
+src/content/faqs/known-issues-and-owner-actions.md
+  s_755964b2e0c3da::t_7b5670e24784ed 21-22,64
+src/content/faqs/environments-and-releases.md
+  s_755964b2e0c3da::t_782f97625248b6 65
+src/content/faqs/credits-and-refunds.md
+  s_755964b2e0c3da::t_7b5670e24784ed 47,81,114,179,226
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1effc9fafd1077b923b3684608f00550079b664d",
+  "prompts": {},
+  "sessions": {
+    "s_755964b2e0c3da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "41717171-e98d-4ccb-91e6-20f4d84aa5ab",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "naaxtech <naaxtech.official@gmail.com>"
+    }
+  }
+}

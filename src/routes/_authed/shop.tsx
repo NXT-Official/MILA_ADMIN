@@ -257,21 +257,28 @@ function ShopPage() {
         </div>
       ) : (
         <div className="rounded-panel border border-porcelain/60 bg-atelier-panel/40 overflow-x-auto">
-          <Table>
+          <Table className="table-fixed">
             <TableHeader>
               <TableRow className="border-porcelain/30 hover:bg-transparent">
-                {["Item", "Category", "Price", "Links", "Status", "Added", ""].map(
-                  (heading, index) => (
-                    <TableHead
-                      key={heading || index}
-                      className="h-auto px-5 py-3 text-xs uppercase tracking-label-wide text-stone whitespace-nowrap"
-                    >
-                      <span className={heading ? undefined : "sr-only"}>
-                        {heading || "Actions"}
-                      </span>
-                    </TableHead>
-                  ),
-                )}
+                {(
+                  [
+                    ["Item", "30%"],
+                    ["Category", "12%"],
+                    ["Price", "13%"],
+                    ["Links", "14%"],
+                    ["Status", "13%"],
+                    ["Added", "9%"],
+                    ["", "9%"],
+                  ] as const
+                ).map(([heading, width], index) => (
+                  <TableHead
+                    key={heading || index}
+                    style={{ width }}
+                    className="h-auto px-3 py-3 text-xs uppercase tracking-label-wide text-stone whitespace-nowrap"
+                  >
+                    <span className={heading ? undefined : "sr-only"}>{heading || "Actions"}</span>
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -287,43 +294,47 @@ function ShopPage() {
                     key={item.id}
                     className="border-porcelain/30 transition-colors last:border-0 hover:bg-background/40"
                   >
-                    <TableCell className="px-5 py-3">
+                    <TableCell className="px-3 py-3">
                       <div className="flex items-center gap-3">
                         <ShopItemThumb item={item} />
                         <div className="min-w-0">
-                          <div className="font-serif text-sm text-ink truncate max-w-[18rem]">
+                          <div className="font-serif text-sm text-ink truncate" title={item.title}>
                             {item.title}
                           </div>
-                          <div className="text-micro uppercase tracking-label text-stone mt-0.5">
+                          <div className="text-micro uppercase tracking-label text-stone mt-0.5 truncate">
                             {item.brand_name ?? "—"}
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-5 py-3">
+                    <TableCell className="px-3 py-3">
                       <div className="text-sm text-ink">{item.category}</div>
                       <div className="text-micro uppercase tracking-label text-stone">
                         {item.gender}
                       </div>
                     </TableCell>
-                    <TableCell className="px-5 py-3">
+                    <TableCell className="px-3 py-3">
                       <ShopPrice item={item} />
                     </TableCell>
-                    <TableCell className="px-5 py-3">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <ExternalLinkButton href={item.affiliate_link} />
+                    <TableCell className="px-3 py-3">
+                      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                        <ExternalLinkButton href={item.affiliate_link} className="min-w-0" />
                         {item.brand_website ? (
-                          <ExternalLinkButton href={item.brand_website} label="Brand site" />
+                          <ExternalLinkButton
+                            href={item.brand_website}
+                            label="Brand site"
+                            className="min-w-0"
+                          />
                         ) : null}
                       </div>
                     </TableCell>
-                    <TableCell className="px-5 py-3">
+                    <TableCell className="px-3 py-3">
                       <ShopStatusBadges item={item} />
                     </TableCell>
-                    <TableCell className="px-5 py-3 text-micro uppercase tracking-label text-stone whitespace-nowrap">
+                    <TableCell className="px-3 py-3 text-micro uppercase tracking-label text-stone whitespace-nowrap">
                       {new Date(item.date_added).toLocaleDateString()}
                     </TableCell>
-                    <TableCell className="px-5 py-3 text-right">
+                    <TableCell className="px-3 py-3 text-right">
                       <Button
                         variant="outline"
                         size="sm"
